@@ -1,0 +1,13 @@
+Now our irc is upgraded to be a server
+For now use just (./irc <port>) to execute it
+1 - We can connect many clients and listen to them at the same time 
+	+ you guys can test it by tapping "nc 127.0.0.1 <port>"
+	+ nc is a client that we already have in our env and we can use it for testing
+	+ if you want to test with to many client using this line : just split terminal
+2 - we can give a name for each client : try to write anything from the client side 
+	and you will have a msg to set the name.
+3 - KICK should work now(can be fixed after)
+4 - PRIVMSG is also there ,for now we can just send msgs between clients by using their names
+	+ send this from the client to test "/PRIVMSG <target_name> <MSG>"
+		dont forget to have at least 2 clients with names before testing it
+NOTE : the most lines have a comment to explain their work, if something was not clear mention it on slack group
