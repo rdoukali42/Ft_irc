@@ -11,3 +11,22 @@ For now use just (./irc <port>) to execute it
 	+ send this from the client to test "/PRIVMSG <target_name> <MSG>"
 		dont forget to have at least 2 clients with names before testing it
 NOTE : the most lines have a comment to explain their work, if something was not clear mention it on slack group
+
+================== Shettima =============================================
+
+Here's a breakdown of the code:
+
+1. I added a new include header #include <vector>.
+
+2. Created and broke some parts of the main into individual functions:
+		a. 'error' function for printing error messages and exiting the program.
+
+		b. 'searchByUsername' function for searching for a client based on their username.
+
+		c. 'setNonBlocking' function for setting a socket to non-blocking mode.
+
+		d. 'readFromSocket' function for reading data from a socket into a buffer.
+
+		e. 'writeToSocket' function for writting data from a buffer to a socket.
+
+		f. 'processReceivedData' function for processing the received data from a client. 
