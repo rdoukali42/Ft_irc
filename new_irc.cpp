@@ -29,6 +29,7 @@ struct Channel
 	int sok; //tmp var to test
 	int index;
 	int limit;
+	std::vector<int> users_sockets;
 	std::string name;
 	std::string topic;
 	std::string PRVIMSG_Index;
@@ -41,17 +42,30 @@ void error(const std::string& msg)
 	exit(1);
 }
 
-int searchByUsername(const std::string& target, const Client* clients, int numClients)
+int searchBySocket(const int &socket, const Client* clients, int numClients)
 {
-	std::string target2 = target + "\n";
 	for (int i = 0; i < numClients; i++)
 	{
-		if (clients[i].username == target2)
+		if (socket == clients[i].socket)//working!
 		{
 			return i;
 		}
 	}
-	return 0;
+	return -1;
+}
+
+
+int searchByUsername(const std::string& target, const Client* clients, int numClients)
+{
+	std::string target2 = target;
+	for (int i = 0; i < numClients; i++)
+	{
+		if (strcmp(clients[i].username.c_str(), target2.c_str()) == 0)//working!
+		{
+			return i;
+		}
+	}
+	return -1;
 }
 
 int searchBychannelname(const std::string& target, const Channel* channels, int numChannels)
@@ -255,7 +269,7 @@ int main(int argc, char* argv[])
 					int tmp = 0;
 					// Extract the target and message from the user input
 					std::string targetAndMessage = message.substr(9); // Remove the command prefix and space
-					if (targetAndMessage.find("#") >= 0)
+					if (targetAndMessage.find("#") != std::string::npos)
 					{
 						targetAndMessage = message.substr(10);
 						tmp = 1;
@@ -281,10 +295,23 @@ int main(int argc, char* argv[])
 						int ind = searchBychannelname(target, channels, MAX_CHANNELS);
 						if (ind == -1)
 							error("Channel not found");
-						ssize_t bytesWritten = send(channels[ind].sok, privmsgCommand.c_str(), privmsgCommand.length(), 0);
-						if (bytesWritten < 0) {
-							error("Sending data failed");
+						for (std::size_t i = 0; i < channels[ind].users_sockets.size(); ++i) {
+							ssize_t bytesWritten = send(channels[ind].users_sockets[i], privmsgCommand.c_str(), privmsgCommand.length(), 0);
+							if (bytesWritten < 0) {
+								error("Sending data failed");
+							}
 						}
+						// for (std::vector<int>::const_iterator it = channels[ind].users_sockets.begin(); it <= channels[ind].users_sockets.end(); it++)
+						// {
+						// 	ssize_t bytesWritten = send(channels[ind].users_sockets[it], privmsgCommand.c_str(), privmsgCommand.length(), 0);
+						// 	if (bytesWritten < 0) {
+						// 		error("Sending data failed");
+						// 	}
+						// }
+						// ssize_t bytesWritten = send(channels[ind].sok, privmsgCommand.c_str(), privmsgCommand.length(), 0);
+						// if (bytesWritten < 0) {
+						// 	error("Sending data failed");
+						// }
 						/*need to be fixed*/
 					}
 				}
@@ -300,8 +327,19 @@ int main(int argc, char* argv[])
 					if (searchBychannelname(channel, channels, MAX_CHANNELS) > 0)
 					{
 						int channel_index2 = searchBychannelname(channel, channels, MAX_CHANNELS);
+						if (channels[channel_index2].users_sockets.size() <= channels[channel_index2].limit)
+							channels[channel_index2].users_sockets.push_back(clients[i].socket);
+						else{
+							std::string channelFullPrompt = "Channel " + channel + " is full\n";
+							send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+						}
 						std::string roomPrompt = "Channel Name is : " + channels[channel_index2].name + "\nTopic : " + channels[channel_index2].topic + "\nLimit is : " + std::to_string(channels[channel_index2].limit) + "\nAllowed Private Msg : " + channels[channel_index2].PRVIMSG_Index + "\n";
 						send(clientSocket, roomPrompt.c_str(), roomPrompt.length(), 0);
+						for (std::size_t i = 0; i < channels[channel_index2].users_sockets.size(); ++i) {
+							std::cout << "USER " + clients[searchBySocket(channels[channel_index2].users_sockets[i], clients, MAX_CLIENTS)].username << std::endl;
+						}
+						std::cout << "number of users in channel:" << channels[channel_index2].users_sockets.size() << std::endl;
+						std::cout << "users_sockets.size:" <<  channels[channel_index2].users_sockets.size() << ". limit:" << channels[channel_index2].limit << std::endl;
 					}
 					else
 					{
@@ -339,10 +377,14 @@ int main(int argc, char* argv[])
 								// Assign the index to the channel
 								channels[channel_index].PRVIMSG_Index = indexx;
 								channels[channel_index].index = channel_index; // using index to check if the channel is created or not (if 0 ....)
-								channel_index++;
-								channels[channel_index].sok = clientSocket;
+								if (channels[channel_index].limit != 0)
+								{
+									std::cout << "pushed " << clients[i].username << std::endl;
+									channels[channel_index].users_sockets.push_back(clients[i].socket);
+								}
 								std::string iPrompt = "Channel " + channel + " Created\n";
 								send(clientSocket, iPrompt.c_str(), iPrompt.length(), 0);
+								channel_index++;
 							}
 							else
 							{
