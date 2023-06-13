@@ -12,6 +12,22 @@ For now use just (./irc <port>) to execute it
 		dont forget to have at least 2 clients with names before testing it
 NOTE : the most lines have a comment to explain their work, if something was not clear mention it on slack group
 
+UPDATE!!!!  --> 11/06
+1 - We should execute with (./irc <port> <password>)
+2 - a CLient must Log using the same password in Server, Also should fill Username + nickname Before get connected to the server
+3 - Now JOIN should Create a Channel (of course it dosn't work probably)
+	+ Test line : /JOIN <channel_name> <blabla>
+	+ blabla thing just to avoid a newline inside channel_name(i will fixed after, i should find other way to read)
+	+ when you try to create a channel for the first you should fill some info (limit should be only numbers)
+	+ if a channel is already created before it will show the info of channel
+For now a Client can't really join the channel or use it to send a MSG(i start working on it, and i will finish it later)
+
+
+UPDATE!!!!  --> 13/06
+1 - Commands "/KICK" and "/TOPIC" works as we need(check the CMDs_Doc.md to see how the commands should be tested)
+2 - KICK command can be used just by the client who creat the Channel(when we make /MODE then we can transfer the admin_priv to another client)
+3 - TOPIC command print the Topic_string if there is no option with (if there is something after it will be considered as the new Topic)
+=======
 ================== Shettima =============================================
 
 Here's a breakdown of the code:
@@ -30,3 +46,4 @@ Here's a breakdown of the code:
 		e. 'writeToSocket' function for writting data from a buffer to a socket.
 
 		f. 'processReceivedData' function for processing the received data from a client. 
+
