@@ -26,12 +26,18 @@ Client clients[MAX_CLIENTS];
 
 struct Channel
 {
-	int sok; //tmp var to test
+	std::string admin; //Who creat Channel should have if default
 	int index;
 	int limit;
+	int invite_only;
+	int key_mode;
+	int limit_mode;
+	std::vector<int> users_sockets;
+	std::vector<int> admin_users;
 	std::string name;
 	std::string topic;
 	std::string PRVIMSG_Index;
+	std::string password;
 };
 Channel channels[MAX_CHANNELS];
 
@@ -41,17 +47,47 @@ void error(const std::string& msg)
 	exit(1);
 }
 
-int searchByUsername(const std::string& target, const Client* clients, int numClients)
+void removeClient(std::vector<int>& users_sockets, int clientSocket)
 {
-	std::string target2 = target + "\n";
+	std::vector<int>::iterator it = std::find(users_sockets.begin(), users_sockets.end(), clientSocket);
+	if (it != users_sockets.end()) {
+		users_sockets.erase(it);
+	}
+}
+bool searchIfExist(const std::vector<int>& sockets, const int& clientSocket)
+{
+	for (std::vector<int>::const_iterator it = sockets.begin(); it != sockets.end(); ++it) {
+		if (*it == clientSocket) {
+			return true;
+		}
+	}
+	return false;
+}
+
+int searchBySocket(const int &socket, const Client* clients, int numClients)
+{
 	for (int i = 0; i < numClients; i++)
 	{
-		if (clients[i].username == target2)
+		if (socket == clients[i].socket)//working!
 		{
 			return i;
 		}
 	}
-	return 0;
+	return -1;
+}
+
+
+int searchByUsername(const std::string& target, const Client* clients, int numClients)
+{
+	std::string target2 = target;
+	for (int i = 0; i < numClients; i++)
+	{
+		if (strcmp(clients[i].username.c_str(), target2.c_str()) == 0)//working!
+		{
+			return i;
+		}
+	}
+	return -1;
 }
 
 int searchBychannelname(const std::string& target, const Channel* channels, int numChannels)
@@ -59,7 +95,8 @@ int searchBychannelname(const std::string& target, const Channel* channels, int 
 	std::string target2 = target;
 	for (int i = 0; i < numChannels; i++)
 	{
-		if (channels[i].name == target2)
+		// std::cout << "Channel name :" << channels[i].name  << " | Target is : " << target2 << std::endl;
+		if (strcmp(channels[i].name.c_str(), target2.c_str()) == 0)
 		{
 			return i;
 		}
@@ -125,7 +162,7 @@ int main(int argc, char* argv[])
 
 	fd_set readFds;
 	int maxFd = serverSocket;
-	int channel_index = 1;
+	int channel_index = 0;
 
 	while (true)
 	{
@@ -255,7 +292,7 @@ int main(int argc, char* argv[])
 					int tmp = 0;
 					// Extract the target and message from the user input
 					std::string targetAndMessage = message.substr(9); // Remove the command prefix and space
-					if (targetAndMessage.find("#") >= 0)
+					if (targetAndMessage.find("#") != std::string::npos)
 					{
 						targetAndMessage = message.substr(10);
 						tmp = 1;
@@ -277,15 +314,24 @@ int main(int argc, char* argv[])
 					}
 					else
 					{
-						/*need to be fixed*/
 						int ind = searchBychannelname(target, channels, MAX_CHANNELS);
 						if (ind == -1)
 							error("Channel not found");
-						ssize_t bytesWritten = send(channels[ind].sok, privmsgCommand.c_str(), privmsgCommand.length(), 0);
-						if (bytesWritten < 0) {
-							error("Sending data failed");
+						if (strcmp(channels[ind].PRVIMSG_Index.c_str(), "yes") == 0)
+						{
+							for (std::size_t i = 0; i < channels[ind].users_sockets.size(); ++i)
+							{
+								ssize_t bytesWritten = send(channels[ind].users_sockets[i], privmsgCommand.c_str(), privmsgCommand.length(), 0);
+								if (bytesWritten < 0) {
+									error("Sending data failed");
+								}
+							}
 						}
-						/*need to be fixed*/
+						else
+						{
+							std::string msgPrompt = "No permission To send PRIVMSG in this Channel \n";
+							send(clients[i].socket, msgPrompt.c_str(), msgPrompt.length(), 0);
+						}
 					}
 				}
 				if (message.substr(0, 5) == "/JOIN")
@@ -297,16 +343,42 @@ int main(int argc, char* argv[])
 					std::string text = channelAndMessage.substr(pos + 1); // Extract the message text
 
 					//Check if the channel exist
-					if (searchBychannelname(channel, channels, MAX_CHANNELS) > 0)
+					if (searchBychannelname(channel, channels, MAX_CHANNELS) != -1)
 					{
 						int channel_index2 = searchBychannelname(channel, channels, MAX_CHANNELS);
+						if (channels[channel_index2].users_sockets.size() < channels[channel_index2].limit)
+							{
+								if (!searchIfExist(channels[channel_index2].users_sockets, clients[i].socket))
+								{
+									channels[channel_index2].users_sockets.push_back(clients[i].socket);
+									channels[channel_index2].admin = "";
+								}
+								else{
+									std::string channelFullPrompt = "User Already In This Channel\n";
+									send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+								}
+							}
+						else{
+							std::string channelFullPrompt = "Channel " + channel + " is full\n";
+							send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+						}
 						std::string roomPrompt = "Channel Name is : " + channels[channel_index2].name + "\nTopic : " + channels[channel_index2].topic + "\nLimit is : " + std::to_string(channels[channel_index2].limit) + "\nAllowed Private Msg : " + channels[channel_index2].PRVIMSG_Index + "\n";
 						send(clientSocket, roomPrompt.c_str(), roomPrompt.length(), 0);
+						for (std::size_t i = 0; i < channels[channel_index2].users_sockets.size(); ++i) {
+							std::cout << "USER " + clients[searchBySocket(channels[channel_index2].users_sockets[i], clients, MAX_CLIENTS)].username << std::endl;
+						}
+						std::cout << "number of users in channel:" << channels[channel_index2].users_sockets.size() << std::endl;
+						std::cout << "users_sockets.size:" <<  channels[channel_index2].users_sockets.size() << ". limit:" << channels[channel_index2].limit << std::endl;
 					}
 					else
 					{
 						//Create a channel if dosn't exist
 						channels[channel_index].name = channel;
+						channels[channel_index].admin = clients[i].username;
+						channels[channel_index].invite_only = 0;
+						channels[channel_index].key_mode = 0;
+						channels[channel_index].limit_mode = 1;
+						channels[channel_index].password = "";
 						std::string TopicPrompt = "Please enter a TOPIC for the " + channel + " channel : ";
 						send(clientSocket, TopicPrompt.c_str(), TopicPrompt.length(), 0);
 						char TopicBuffer[MAX_BUFFER_SIZE];
@@ -339,14 +411,23 @@ int main(int argc, char* argv[])
 								// Assign the index to the channel
 								channels[channel_index].PRVIMSG_Index = indexx;
 								channels[channel_index].index = channel_index; // using index to check if the channel is created or not (if 0 ....)
+								if (channels[channel_index].limit != 0)
+								{
+									std::cout << "pushed " << clients[i].username << std::endl;
+									channels[channel_index].users_sockets.push_back(clients[i].socket);
+									std::string iPrompt = "Channel " + channel + " Created\n";
+									send(clientSocket, iPrompt.c_str(), iPrompt.length(), 0);
+								}
+								else
+								{
+									std::string iPrompt = "Channel " + channel + " Created, BUT no one can JOIN\n";
+									send(clientSocket, iPrompt.c_str(), iPrompt.length(), 0);
+								}
 								channel_index++;
-								channels[channel_index].sok = clientSocket;
-								std::string iPrompt = "Channel " + channel + " Created\n";
-								send(clientSocket, iPrompt.c_str(), iPrompt.length(), 0);
 							}
 							else
 							{
-								std::string indexPrompt = "Wrong INPUT !! Channel not saved";
+								std::string indexPrompt = "Wrong INPUT !! Channel not saved\n";
 								send(clientSocket, indexPrompt.c_str(), indexPrompt.length(), 0);
 								channels[channel_index].topic = "";
 								channels[channel_index].name = "";
@@ -354,14 +435,63 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
-			        // Example: Print received message to the console
-			        // std::cout << "Received from client: " << std::string(buffer, bytesRead) << std::endl;
-			
-			        // // Example: Echo the received message back to the client
-			        // ssize_t bytesSent = send(clientSocket, buffer, bytesRead, 0);
-			        // if (bytesSent == -1) {
-			        //     error("Sending data failed");
-			        // }
+				if (message.substr(0, 5) == "/KICK")
+				{
+					// Extract the Channel name and username from the user input
+					std::string channelAnduser = message.substr(6); // Remove the command prefix and space
+					std::string::size_type pos = channelAnduser.find(" ");
+					std::string channelname = channelAnduser.substr(1, pos - 1); // Extract the channel starting from 1 to avoid '#'
+					std::string userAndmsg = channelAnduser.substr(pos + 1);
+					std::string::size_type poss = userAndmsg.find(" ");
+					std::string user = userAndmsg.substr(0, poss); // Extract the username
+					int ch_ind = searchBychannelname(channelname, channels, MAX_CHANNELS);////////////i don't know why this Fuc****g Function return -1 in this case
+					int cl_ind = searchByUsername(user, clients, MAX_CLIENTS);
+					if (ch_ind == -1)
+						std::cout << channelname << " : Channel Not found " << std::endl;
+					else if (cl_ind == -1)
+						std::cout << user << " : Client Not found " << std::endl;
+					else if (strcmp(channels[ch_ind].admin.c_str(), clients[i].username.c_str()) == 0)
+					{
+						std::string kickPrompt = "USER : " + clients[cl_ind].username + " is Removed from [" + channels[ch_ind].name + " | " + channelname + "] Because " + userAndmsg.substr(poss + 2);
+						send(clients[i].socket, kickPrompt.c_str(), kickPrompt.length(), 0);
+						removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
+						// std::cout << "number of users in channel:" << channels[ch_ind].users_sockets.size() << std::endl;
+						// std::cout << "users_sockets.size:" <<  channels[ch_ind].users_sockets.size() << ". limit:" << channels[ch_ind].limit << std::endl;
+					}
+					else
+					{
+						std::string Prompt = "Your not Allow to do this Action \n";
+						send(clients[i].socket, Prompt.c_str(), Prompt.length(), 0);
+					}
+				}
+				if (message.substr(0, 6) == "/TOPIC")
+				{
+					std::string channelAndmsg = message.substr(7); // Remove the command prefix and space
+					std::string::size_type pos = channelAndmsg.find(" ");
+					if (pos != std::string::npos)// The " " character was found in the string.
+					{
+						std::string channelname = channelAndmsg.substr(1, pos - 1); // Extract the channel starting from 1 to avoid '#'
+						std::string msg = channelAndmsg.substr(pos + 1); // Extract the message text
+						channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].topic = msg;
+					}
+					else // The " " character was not found in the string --> that mean there is no msg
+					{
+						std::string channelname = channelAndmsg.substr(pos + 2);
+						channelname.erase(channelname.find_last_not_of(" \t\r\n") + 1);// Remove trailing whitespace characters
+						std::cout << channelname << std::endl;
+						int ind = searchBychannelname(channelname, channels, MAX_CHANNELS);
+						if (ind == -1)
+							error("Channel not found");
+						std::string privmsgCommand = " TOPIC is : " + channels[ind].topic + "\r\n";
+						for (std::size_t i = 0; i < channels[ind].users_sockets.size(); ++i)
+						{
+							ssize_t bytesWritten = send(channels[ind].users_sockets[i], privmsgCommand.c_str(), privmsgCommand.length(), 0);
+							if (bytesWritten < 0) {
+								error("Sending data failed");
+							}
+						}
+					}
+				}
 			    }
 			}
 		}

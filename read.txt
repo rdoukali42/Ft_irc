@@ -21,3 +21,9 @@ UPDATE!!!!  --> 11/06
 	+ when you try to create a channel for the first you should fill some info (limit should be only numbers)
 	+ if a channel is already created before it will show the info of channel
 For now a Client can't really join the channel or use it to send a MSG(i start working on it, and i will finish it later)
+
+
+UPDATE!!!!  --> 13/06
+1 - Commands "/KICK" and "/TOPIC" works as we need(check the CMDs_Doc.md to see how the commands should be tested)
+2 - KICK command can be used just by the client who creat the Channel(when we make /MODE then we can transfer the admin_priv to another client)
+3 - TOPIC command print the Topic_string if there is no option with (if there is something after it will be considered as the new Topic)
