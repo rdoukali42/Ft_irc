@@ -356,7 +356,7 @@ int main(int argc, char* argv[])
 					if (searchBychannelname(channel, channels, MAX_CHANNELS) != -1)
 					{
 						int channel_index2 = searchBychannelname(channel, channels, MAX_CHANNELS);
-						if (channels[channel_index2].users_sockets.size() < channels[channel_index2].limit)
+						if (channels[channel_index2].users_sockets.size() < channels[channel_index2].limit || channels[channel_index2].limit_mode == 0)
 							{
 								if (!searchIfExist(channels[channel_index2].users_sockets, clients[i].socket))
 								{
@@ -377,8 +377,8 @@ int main(int argc, char* argv[])
 						std::string roomPrompt = "Channel Name is : " + channels[channel_index2].name +
 						"\nTopic : " + channels[channel_index2].topic +
 						"\nLimit is : " + std::to_string(channels[channel_index2].limit) +
-						"\nAllowed Private Msg : " + channels[channel_index2].PRVIMSG_Index + "\n" +
-						"channel admins :";
+						"\nAllowed Private Msg : " + channels[channel_index2].PRVIMSG_Index +
+						"\nchannel admins :";
 						for (std::vector<std::string>::const_iterator it = channels[channel_index2].admin_users.begin(); it != channels[channel_index2].admin_users.end(); ++it) {
 							roomPrompt =  roomPrompt + *it + ", ";
 						}
@@ -407,6 +407,7 @@ int main(int argc, char* argv[])
 						if (bytesRead > 0) {
 							TopicBuffer[bytesRead - 1] = '\0';
 							std::string Topic(TopicBuffer, bytesRead);
+							Topic.erase(Topic.find_last_not_of(" \t\r\n") + 1);
 							// Assign the topic to the channel
 							channels[channel_index].topic = Topic;
 						}
@@ -515,6 +516,41 @@ int main(int argc, char* argv[])
 							if (bytesWritten < 0) {
 								error("Sending data failed");
 							}
+						}
+					}
+				}
+				if (message.substr(0, 5) == "/MODE")
+				{
+					std::string channelAndmsg = message.substr(6); // Remove the command prefix and space--> ex : "#room +i testmsg"
+					std::string::size_type pos = channelAndmsg.find(" "); //--> ex : 5
+					std::string channel = channelAndmsg.substr(1, pos - 1); //--> ex : "room"
+					std::string argsAndmsg = channelAndmsg.substr(pos + 1); //--> ex : "+i testmsg"
+					std::string::size_type poss = argsAndmsg.find(" ");// ex : 2
+					if (poss != std::string::npos)// The " " character was found in the string.
+					{
+						std::string args = argsAndmsg.substr(0, poss); // Extract the args with the sign --> ex : "+i"
+						std::string msg = argsAndmsg.substr(poss + 1); // Extract the message text --> ex : "testmsg"
+						msg.erase(msg.find_last_not_of(" \t\r\n") + 1);// Remove trailing whitespace characters
+						std::cout << "Channel is :: " << channel << "|" << std::endl;
+						std::cout << "ARG & MSG is :: " << argsAndmsg << "|" << std::endl;
+						std::cout << "ARG is :: " << args << "|" << std::endl;
+						std::cout << "msg is :: " << msg << "|" << std::endl;
+						if (args == "+l")
+						{
+							int new_limit = std::stoi(msg);
+							std::cout << "new_limit is :: " << new_limit << "|" << std::endl;
+							channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit_mode = 1;
+							channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit = new_limit;
+						}
+					}
+					else // The " " character was not found in the string --> that mean there is no msg
+					{
+						std::string args = argsAndmsg.substr(0);
+						args.erase(args.find_last_not_of(" \t\r\n") + 1);// Remove trailing whitespace characters
+						std::cout << args << std::endl;
+						if (args == "-l")
+						{
+							channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit_mode = 0;
 						}
 					}
 				}
