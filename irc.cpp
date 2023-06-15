@@ -452,7 +452,7 @@ int main(int argc, char* argv[])
 						std::cout << channelname << " : Channel Not found " << std::endl;
 					else if (cl_ind == -1)
 						std::cout << user << " : Client Not found " << std::endl;
-					else if (strcmp(channels[ch_ind].admin.c_str(), clients[i].username.c_str()) == 0)//admin value is empty
+					else if (strcmp(channels[ch_ind].admin.c_str(), clients[i].username.c_str()) == 0)
 					{
 						std::string kickPrompt = "USER : " + clients[cl_ind].username + " is Removed from [" + channels[ch_ind].name + " | " + channelname + "] Because " + userAndmsg.substr(poss + 2);
 						send(clients[i].socket, kickPrompt.c_str(), kickPrompt.length(), 0);
