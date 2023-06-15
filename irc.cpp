@@ -33,7 +33,7 @@ struct Channel
 	int key_mode;
 	int limit_mode;
 	std::vector<int> users_sockets;
-	std::vector<int> admin_users;
+	std::vector<std::string> admin_users;
 	std::string name;
 	std::string topic;
 	std::string PRVIMSG_Index;
@@ -62,6 +62,16 @@ bool searchIfExist(const std::vector<int>& sockets, const int& clientSocket)
 		}
 	}
 	return false;
+}
+
+int isAdmin(const std::vector<std::string>& admin_users, const std::string& user)
+{
+	for (std::vector<std::string>::const_iterator it = admin_users.begin(); it != admin_users.end(); ++it) {
+		if (*it == user) {
+			return 1;
+		}
+	}
+	return 0;
 }
 
 int searchBySocket(const int &socket, const Client* clients, int numClients)
@@ -351,8 +361,9 @@ int main(int argc, char* argv[])
 								if (!searchIfExist(channels[channel_index2].users_sockets, clients[i].socket))
 								{
 									channels[channel_index2].users_sockets.push_back(clients[i].socket);
-									if (channels[channel_index2].admin == "")
-										channels[channel_index2].admin = "empty";
+									// if (channels[channel_index2].admin == "")
+									// 	channels[channel_index2].admin = "empty";
+									// channels[channel_index2].admin_users.push_back(clients[i].username);
 								}
 								else{
 									std::string channelFullPrompt = "User Already In This Channel\n";
@@ -363,7 +374,15 @@ int main(int argc, char* argv[])
 							std::string channelFullPrompt = "Channel " + channel + " is full\n";
 							send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
 						}
-						std::string roomPrompt = "Channel Name is : " + channels[channel_index2].name + "\nTopic : " + channels[channel_index2].topic + "\nLimit is : " + std::to_string(channels[channel_index2].limit) + "\nAllowed Private Msg : " + channels[channel_index2].PRVIMSG_Index + "\nCHannel Admin : " + channels[channel_index2].admin + "\n";
+						std::string roomPrompt = "Channel Name is : " + channels[channel_index2].name +
+						"\nTopic : " + channels[channel_index2].topic +
+						"\nLimit is : " + std::to_string(channels[channel_index2].limit) +
+						"\nAllowed Private Msg : " + channels[channel_index2].PRVIMSG_Index + "\n" +
+						"channel admins :";
+						for (std::vector<std::string>::const_iterator it = channels[channel_index2].admin_users.begin(); it != channels[channel_index2].admin_users.end(); ++it) {
+							roomPrompt =  roomPrompt + *it + ", ";
+						}
+						roomPrompt = roomPrompt + "\n";
 						send(clientSocket, roomPrompt.c_str(), roomPrompt.length(), 0);
 						for (std::size_t i = 0; i < channels[channel_index2].users_sockets.size(); ++i) {
 							std::cout << "USER " + clients[searchBySocket(channels[channel_index2].users_sockets[i], clients, MAX_CLIENTS)].username << std::endl;
@@ -375,7 +394,8 @@ int main(int argc, char* argv[])
 					{
 						//Create a channel if dosn't exist
 						channels[channel_index].name = channel;
-						channels[channel_index].admin = clients[i].username;
+						channels[channel_index].admin_users.push_back(clients[i].username);
+						// channels[channel_index].admin = clients[i].username;
 						channels[channel_index].invite_only = 0;
 						channels[channel_index].key_mode = 0;
 						channels[channel_index].limit_mode = 1;
@@ -452,17 +472,20 @@ int main(int argc, char* argv[])
 						std::cout << channelname << " : Channel Not found " << std::endl;
 					else if (cl_ind == -1)
 						std::cout << user << " : Client Not found " << std::endl;
-					else if (strcmp(channels[ch_ind].admin.c_str(), clients[i].username.c_str()) == 0)
+					else if (isAdmin(channels[ch_ind].admin_users, clients[i].username))
 					{
 						std::string kickPrompt = "USER : " + clients[cl_ind].username + " is Removed from [" + channels[ch_ind].name + " | " + channelname + "] Because " + userAndmsg.substr(poss + 2);
 						send(clients[i].socket, kickPrompt.c_str(), kickPrompt.length(), 0);
 						removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
-						// std::cout << "number of users in channel:" << channels[ch_ind].users_sockets.size() << std::endl;
-						// std::cout << "users_sockets.size:" <<  channels[ch_ind].users_sockets.size() << ". limit:" << channels[ch_ind].limit << std::endl;
 					}
 					else
 					{
-						std::cout << "channel admin :" << channels[ch_ind].admin << ". username :" << clients[i].username << std::endl;
+						std::cout << "channel admins :";// << channels[ch_ind].admin << ". username :" << clients[i].username << std::endl;
+						for (std::vector<std::string>::const_iterator it = channels[ch_ind].admin_users.begin(); it != channels[ch_ind].admin_users.end(); ++it) {
+							std::cout << *it << ", ";
+						}
+						std::cout << std::endl;
+						// std::cout << "channel admin :" << channels[ch_ind].admin << ". username :" << clients[i].username << std::endl;
 						std::string Prompt = "You're not Allowed to do this Action \n";
 						send(clients[i].socket, Prompt.c_str(), Prompt.length(), 0);
 					}
