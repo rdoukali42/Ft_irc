@@ -67,7 +67,8 @@ bool searchIfExist(const std::vector<int>& sockets, const int& clientSocket)
 int isAdmin(const std::vector<std::string>& admin_users, const std::string& user)
 {
 	for (std::vector<std::string>::const_iterator it = admin_users.begin(); it != admin_users.end(); ++it) {
-		if (*it == user) {
+		std::string c_it = *it;
+		if (strcmp(c_it.c_str(), user.c_str()) == 0) {
 			return 1;
 		}
 	}
@@ -374,16 +375,16 @@ int main(int argc, char* argv[])
 							std::string channelFullPrompt = "Channel " + channel + " is full\n";
 							send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
 						}
-						std::string roomPrompt = "Channel Name is : " + channels[channel_index2].name +
-						"\nTopic : " + channels[channel_index2].topic +
-						"\nLimit is : " + std::to_string(channels[channel_index2].limit) +
-						"\nAllowed Private Msg : " + channels[channel_index2].PRVIMSG_Index +
+						std::cout << "Channel Name is : "<< channels[channel_index2].name <<
+						"\nTopic : " << channels[channel_index2].topic <<
+						"\nLimit is : " + std::to_string(channels[channel_index2].limit) <<
+						"\nAllowed Private Msg : " << channels[channel_index2].PRVIMSG_Index <<
 						"\nchannel admins :";
 						for (std::vector<std::string>::const_iterator it = channels[channel_index2].admin_users.begin(); it != channels[channel_index2].admin_users.end(); ++it) {
-							roomPrompt =  roomPrompt + *it + ", ";
+							std::cout << *it << ", ";
 						}
-						roomPrompt = roomPrompt + "\n";
-						send(clientSocket, roomPrompt.c_str(), roomPrompt.length(), 0);
+						std::cout << std::endl;
+						// send(clientSocket, roomPrompt.c_str(), roomPrompt.length(), 0);
 						for (std::size_t i = 0; i < channels[channel_index2].users_sockets.size(); ++i) {
 							std::cout << "USER " + clients[searchBySocket(channels[channel_index2].users_sockets[i], clients, MAX_CLIENTS)].username << std::endl;
 						}
@@ -519,11 +520,12 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
-				if (message.substr(0, 5) == "/MODE")
+				if (message.substr(0, 5) == "/MODE")/// should check if the client is ADMIN
 				{
 					std::string channelAndmsg = message.substr(6); // Remove the command prefix and space--> ex : "#room +i testmsg"
 					std::string::size_type pos = channelAndmsg.find(" "); //--> ex : 5
 					std::string channel = channelAndmsg.substr(1, pos - 1); //--> ex : "room"
+					if (isAdmin(channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users, clients[i].username)){
 					std::string argsAndmsg = channelAndmsg.substr(pos + 1); //--> ex : "+i testmsg"
 					std::string::size_type poss = argsAndmsg.find(" ");// ex : 2
 					if (poss != std::string::npos)// The " " character was found in the string.
@@ -542,6 +544,26 @@ int main(int argc, char* argv[])
 							channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit_mode = 1;
 							channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit = new_limit;
 						}
+						else if ( args == "+o")
+						{
+							if (searchByUsername(msg, clients, MAX_CLIENTS) != -1 && !isAdmin(channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users, msg))//check if client username exists && if he's already an admin. 
+								channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users.push_back(msg);
+						}
+						else if ( args == "-o")
+						{
+							if (searchByUsername(msg, clients, MAX_CLIENTS) != -1 && isAdmin(channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users, msg))//check if client username exists && if he's already an admin. 
+							{
+								for (int i = 0 ; i < channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users.size(); i++) {
+	
+									if (strcmp(channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users[i].c_str(), msg.c_str()) == 0)
+									{
+										std::cout << "found it : " << channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users[i] + "." + msg + "." << std::endl;
+										channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users.erase(channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users.begin() + i);
+									}
+									i++;
+								}
+							}
+						}
 					}
 					else // The " " character was not found in the string --> that mean there is no msg
 					{
@@ -552,6 +574,11 @@ int main(int argc, char* argv[])
 						{
 							channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit_mode = 0;
 						}
+					}
+					}
+					else{
+						std::string kickPrompt = "You are not an ADMIN \n";
+						send(clients[i].socket, kickPrompt.c_str(), kickPrompt.length(), 0);
 					}
 				}
 			    }
