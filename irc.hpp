@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:07:45 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/16 03:14:45 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/17 00:21:57 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,6 +70,7 @@ int searchBychannelname(const std::string& target, const Channel* channels, int 
 int checkArg(const std::string str,int clientSocket);
 void errorUser(const std::string& msg,int  clientSocket);
 void error(const std::string& msg);
+int checkUserChannel(Channel *channels,const Client *clients, std::string user, std::string channel, int clientSocket);
 
 
 #endif

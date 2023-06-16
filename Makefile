@@ -1,7 +1,22 @@
-FLAGS = -Wall -Wextra -Werror -std=c++98
-NAME = irc
-SRC =	${shell find . -name "*.cpp"}
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2023/06/17 00:54:12 by rdoukali          #+#    #+#              #
+#    Updated: 2023/06/17 01:10:46 by rdoukali         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
 
+NAME = ircserv
+
+SRC		=	${shell find . -name "*.cpp"}
+HDR		=	${shell find . -name "*.hpp"}
+
+FLAGS = -Wall -Wextra -Werror -std=c++98
+CC = c++
 OBJ = 	$(SRC:.cpp=.o)
 
 all: $(NAME)
@@ -10,16 +25,26 @@ all: $(NAME)
 	c++ -c $^ -o $@
 
 $(NAME): $(OBJ)
-	c++ $(FLAGS) $(OBJ) -o $(NAME)
+	@$(CC) $(FLAGS) $(OBJ) -o $(NAME)
+	@echo "\033[31m	   ༺ (\033[31m\033[32mIRC Compiled!\033[31m)༻\033[39m\n"
 
-clean:
-	rm -f $(OBJ)
+# CC = c++
+# CFLAGS = -Wall -Werror -Wextra -std=c++98
 
-fclean:
-	make clean
-	rm -f $(NAME)
+# all : ${NAME}
+
+# ${NAME} : ${SRC}
+# 	@${CC} ${CFLAGS} -o ${NAME} ${SRC}
+# 	@echo "\033[31m	   ༺ (\033[31m\033[32mIRC Compiled!\033[31m)༻\n"
+
+clean :
+	@echo "\033[33m     Clean  ALL ..."
+	@rm -f ${OBJ}
+	
+fclean : clean
+	@rm -f	${NAME}
+	@echo "\033[36mEverything is cleaned! \033[32m✓\n"
 
 re: fclean all
 
-.PHONY:
-	clean fclean re
+.PHONY:all clean fclean re

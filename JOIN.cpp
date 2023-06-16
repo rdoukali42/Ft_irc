@@ -30,8 +30,16 @@ int channelExist(const int clientSocket,Channel *channels,const Client *clients,
 		return 0;
 	if (channels[channel_index2].invite_only == 1)
 	{
-		std::string channelFullPrompt = "MODE INVITE_ONLY ACTIVER\n";
-		send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+		if (!searchIfExist(channels[channel_index2].users_sockets, clients[i].socket))
+		{
+			std::string channelFullPrompt = "MODE INVITE_ONLY ACTIVER\n";
+			send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+		}
+		else
+		{
+			std::string channelFullPrompt = "User Already In This Channel\n";
+			send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+		}
 		return 0;
 	}
 	if (channels[channel_index2].users_sockets.size() < channels[channel_index2].limit || channels[channel_index2].limit_mode == 0)
@@ -39,6 +47,8 @@ int channelExist(const int clientSocket,Channel *channels,const Client *clients,
 			if (!searchIfExist(channels[channel_index2].users_sockets, clients[i].socket))
 			{
 				channels[channel_index2].users_sockets.push_back(clients[i].socket);
+				std::string channelFullPrompt = "Joined sucessfully!\n";
+				send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
 			}
 			else
 			{
@@ -56,22 +66,6 @@ int channelExist(const int clientSocket,Channel *channels,const Client *clients,
 		std::string channelFullPrompt = "Channel " + channel + " is full\n";
 		send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
 	}
-	std::cout << "Channel Name is : "<< channels[channel_index2].name <<
-	"\nTopic : " << channels[channel_index2].topic <<
-	"\nLimit is : " + std::to_string(channels[channel_index2].limit) <<
-	"\nAllowed Private Msg : " << channels[channel_index2].PRVIMSG_Index <<
-	"\nchannel admins :";
-	for (std::vector<std::string>::const_iterator it = channels[channel_index2].admin_users.begin(); it != channels[channel_index2].admin_users.end(); ++it) {
-		std::cout << *it << ", ";
-	}
-	std::cout << std::endl;
-	// send(clientSocket, roomPrompt.c_str(), roomPrompt.length(), 0);
-	for (std::size_t i = 0; i < channels[channel_index2].users_sockets.size(); ++i)
-	{
-		std::cout << "USER " + clients[searchBySocket(channels[channel_index2].users_sockets[i], clients, MAX_CLIENTS)].username << std::endl;
-	}
-	std::cout << "number of users in channel:" << channels[channel_index2].users_sockets.size() << std::endl;
-	std::cout << "users_sockets.size:" <<  channels[channel_index2].users_sockets.size() << ". limit:" << channels[channel_index2].limit << std::endl;
 	return (0);
 }
 
@@ -79,7 +73,6 @@ void channelNotExist(const int clientSocket,Channel *channels,const Client *clie
 {
 	channels[*channel_index].name = channel;
 	channels[*channel_index].admin_users.push_back(clients[i].username);
-	// channels[*channel_index].admin = clients[i].username;
 	channels[*channel_index].invite_only = 0;
 	channels[*channel_index].key_mode = 0;
 	channels[*channel_index].limit_mode = 1;
@@ -119,7 +112,6 @@ void channelNotExist(const int clientSocket,Channel *channels,const Client *clie
 			channels[*channel_index].index = *channel_index; // using index to check if the channel is created or not (if 0 ....)
 			if (channels[*channel_index].limit != 0)
 			{
-				std::cout << "pushed " << clients[i].username << std::endl;
 				channels[*channel_index].users_sockets.push_back(clients[i].socket);
 				std::string iPrompt = "Channel " + channel + " Created\n";
 				send(clientSocket, iPrompt.c_str(), iPrompt.length(), 0);
