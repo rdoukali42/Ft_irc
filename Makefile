@@ -1,6 +1,6 @@
 FLAGS = -Wall -Wextra -Werror -std=c++98
 NAME = irc
-SRC =	irc.cpp
+SRC =	${shell find . -name "*.cpp"}
 
 OBJ = 	$(SRC:.cpp=.o)
 
