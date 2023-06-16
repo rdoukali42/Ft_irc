@@ -28,6 +28,12 @@ int channelExist(const int clientSocket,Channel *channels,const Client *clients,
 	int channel_index2 = searchBychannelname(channel, channels, MAX_CHANNELS);
 	if (checkKeyMode(channels, clients, channel, channel_index2, i) == -1)
 		return 0;
+	if (channels[channel_index2].invite_only == 1)
+	{
+		std::string channelFullPrompt = "MODE INVITE_ONLY ACTIVER\n";
+		send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+		return 0;
+	}
 	if (channels[channel_index2].users_sockets.size() < channels[channel_index2].limit || channels[channel_index2].limit_mode == 0)
 		{
 			if (!searchIfExist(channels[channel_index2].users_sockets, clients[i].socket))

@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:08:32 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/16 02:54:35 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/16 03:22:04 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -413,6 +413,19 @@ int main(int argc, char* argv[])
 						std::string kickPrompt = "You are not an ADMIN \n";
 						send(clients[i].socket, kickPrompt.c_str(), kickPrompt.length(), 0);
 					}
+				}
+				else if (message.substr(0, 7) == "/INVITE")
+				{
+					// Extract the Channel name and username from the user input
+					std::string channelAnduser = message.substr(8); // Remove the command prefix and space
+					std::string::size_type pos = channelAnduser.find(" ");
+					std::string channelname = channelAnduser.substr(1, pos - 1); // Extract the channel starting from 1 to avoid '#'
+					std::string user = channelAnduser.substr(pos + 1);
+					user.erase(user.find_last_not_of(" \t\r\n") + 1);
+					if (searchBychannelname(channelname, channels, MAX_CHANNELS) != -1)
+						inviteUser(clients[searchByUsername(user, clients, MAX_CLIENTS)].socket, channels, clients, channelname, searchByUsername(user, clients, MAX_CLIENTS));
+					else
+						errorUser("CHANNEL NOT FOUND\n", clientSocket);
 				}
 			    }
 			}

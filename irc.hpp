@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:07:45 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/16 02:53:04 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/16 03:14:45 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,7 @@ void channelNotExist(const int clientSocket,Channel *channels,const Client *clie
 void kickUser(Channel *channels,Client *clients, std::string channelname, std::string user, const int i);
 void modeOptions(Channel *channels,const Client *clients, std::string channel,std::string args,std::string msg, const int i);
 void modeNoOptions(Channel *channels,const Client *clients, std::string channel,std::string args, const int i);
+void inviteUser(const int clientSocket,Channel *channels,const Client *clients, std::string channel, const int i);
 
 void removeClient(std::vector<int>& users_sockets, int clientSocket);
 bool searchIfExist(const std::vector<int>& sockets, const int& clientSocket);

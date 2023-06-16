@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 02:47:34 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/16 02:54:09 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/16 03:27:08 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,5 +61,13 @@ void modeNoOptions(Channel *channels,const Client *clients, std::string channel,
 	{
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].key_mode = 0;
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].password = "";
+	}
+	if (args == "-i")
+	{
+		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].invite_only = 0;
+	}
+	if (args == "+i")
+	{
+		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].invite_only = 1;
 	}
  }
