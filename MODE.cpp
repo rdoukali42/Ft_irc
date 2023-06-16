@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 02:47:34 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/16 03:27:08 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/16 03:48:59 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,12 +41,18 @@ void modeOptions(Channel *channels,const Client *clients, std::string channel,st
 			}
 		}
 	}
-	if (args == "+k")
+	else if (args == "+k")
 	{
 		std::cout << "new_Password is :: " << msg << "|" << std::endl;
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].key_mode = 1;
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].password = msg;
 	}
+	else if (args == "+t")
+	{
+		std::cout << "new_Topic is :: " << msg << "|" << std::endl;
+		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].topic = msg;
+	}
+	
 }
 
 void modeNoOptions(Channel *channels,const Client *clients, std::string channel,std::string args, const int i)
@@ -57,17 +63,21 @@ void modeNoOptions(Channel *channels,const Client *clients, std::string channel,
 	{
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit_mode = 0;
 	}
-	if (args == "-k")
+	else if (args == "-k")
 	{
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].key_mode = 0;
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].password = "";
 	}
-	if (args == "-i")
+	else if (args == "-i")
 	{
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].invite_only = 0;
 	}
-	if (args == "+i")
+	else if (args == "+i")
 	{
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].invite_only = 1;
+	}
+	else if (args == "-t")
+	{
+		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].topic = "";
 	}
  }
