@@ -1,239 +1,386 @@
-#include <iostream>
-#include <string>
-#include <cstring>
-#include <cstdlib>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <sys/select.h>
-#include <vector> //added vector header library
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   irc.cpp                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/06/16 00:08:32 by rdoukali          #+#    #+#             */
+/*   Updated: 2023/06/18 19:13:00 by rdoukali         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-const int MAX_BUFFER_SIZE = 1024;
-const int MAX_CLIENTS = FD_SETSIZE - 1;
+#include "irc.hpp"
 
-struct Client
-{
-    int socket;
-    int indice;
-    std::string nickname;
-    std::string username;
-    std::vector<char> inputBuffer;  //added
-    std::vector<char> outputBuffer; //added
-};
+Channel channels[MAX_CHANNELS];
 Client clients[MAX_CLIENTS];
-
-void error(const std::string &msg)
-{
-    std::cerr << "Error: " << msg << std::endl;
-    exit(1);
-}
-
-int searchByUsername(const std::string &target, const Client *clients, int numClients)
-{
-    std::string target2 = target + "\n";
-    for (int i = 0; i < numClients; i++)
-    {
-        if (clients[i].username == target2)
-        {
-            return i;
-        }
-    }
-    return 0;
-}
-
-void setNonBlocking(int socket)
-{
-    int flags = fcntl(socket, F_GETFL, 0);
-    if (flags == -1) {
-        error("Failed to get socket flags");
-    }
-    if (fcntl(socket, F_SETFL, flags | O_NONBLOCK) == -1) {
-        error("Failed to set socket to non-blocking mode");
-    }
-}
-
-ssize_t readFromSocket(int socket, std::vector<char> &buffer)
-{
-    ssize_t bytesRead = recv(socket, buffer.data(), buffer.size(), 0);
-    if (bytesRead < 0) {
-        if (errno != EWOULDBLOCK && errno != EAGAIN) {
-            error("Failed to read from socket");
-        }
-    }
-    return bytesRead;
-}
-
-ssize_t writeToSocket(int socket, const std::vector<char> &buffer)
-{
-    ssize_t bytesWritten = send(socket, buffer.data(), buffer.size(), 0);
-    if (bytesWritten < 0) {
-        if (errno != EWOULDBLOCK && errno != EAGAIN) {
-            error("Failed to write to socket");
-        }
-    }
-    return bytesWritten;
-}
-
-void processReceivedData(Client &client)
-{
-    std::vector<char> &inputBuffer = client.inputBuffer;
-
-    // Process the received data in the input buffer
-    // ... Add your code here to handle incoming messages, commands, etc.
-    // Example: Echo the received message back to the client
-    // client.outputBuffer.insert(client.outputBuffer.end(), inputBuffer.begin(), inputBuffer.end());
-    // inputBuffer.clear();
-
-    // Example: Print received message to the console
-    std::cout << "Received from client " << client.indice << ": " << std::string(inputBuffer.data(), inputBuffer.size()) << std::endl;
-}
-
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2)
-    {
-        std::cout << "Usage: ./a.out <port>" << std::endl;
-        return 0;
-    }
+	if (argc < 3)
+	{
+		std::cout << "Usage: ./a.out <port> <pass>" << std::endl;
+		return 0;
+	}
 
-    const int port = std::stoi(argv[1]);
+	const int port = std::stoi(argv[1]);
+	std::string password = argv[2];
 
-    // Create a socket
-    int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket == -1) {
-        error("Failed to create socket");
-    }
-
-    // Prepare server address structure
-    // struct sockaddr_in serverAddress{};
 	struct sockaddr_in serverAddress;
 	memset(&serverAddress, 0, sizeof(serverAddress));
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(port);
-    serverAddress.sin_addr.s_addr = INADDR_ANY;
+	serverAddress.sin_family = AF_INET;
+	serverAddress.sin_addr.s_addr = INADDR_ANY;
+	serverAddress.sin_port = htons(port);
 
-    // Bind the socket to the server address
-    if (bind(serverSocket, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) == -1) {
-        error("Failed to bind socket");
-    }
+	// Bind the socket to the specified address and port
+	if (bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1) {
+	    error("Failed to bind socket");
+	}
 
-    // Listen for client connections
-    if (listen(serverSocket, MAX_CLIENTS) == -1) {
-        error("Failed to listen for connections");
-    }
+	// Start listening for incoming connections
+	if (listen(serverSocket, SOMAXCONN) == -1) {
+	    error("Failed to listen for connections");
+	}
 
-    // Set the server socket to non-blocking mode
-    setNonBlocking(serverSocket);
+	std::cout << "Server is listening on port " << port << std::endl;
 
-    // Set up the file descriptor sets
-    fd_set readFds;
-    fd_set writeFds;
-    int maxFd = serverSocket;
+	char buffer[MAX_BUFFER_SIZE];
 
-    // Main server loop
-    while (true) {
-        // Clear the file descriptor sets
-        FD_ZERO(&readFds);
-        FD_ZERO(&writeFds);
+	// Create an array of client sockets
+	//int clientSockets[MAX_CLIENTS];
+	for (int i = 0; i < MAX_CLIENTS; ++i) {
+	    clients[i].socket = -1;
+	   clients[i].indice = 0;
+	}
 
-        // Add server socket to the read set
-        FD_SET(serverSocket, &readFds);
+	fd_set readFds;
+	int maxFd = serverSocket;
+	int channel_index = 0;
 
-        // Add client sockets to the read and write sets
-        for (int i = 0; i < MAX_CLIENTS; i++) {
-            if (clients[i].socket > 0) {
-                int clientSocket = clients[i].socket;
-                FD_SET(clientSocket, &readFds);
-                FD_SET(clientSocket, &writeFds);
-                if (clientSocket > maxFd) {
-                    maxFd = clientSocket;
-                }
-            }
-        }
+	while (true)
+	{
+		// Clear the set and add the server socket to the set
+		FD_ZERO(&readFds);
+		FD_SET(serverSocket, &readFds);
 
-        // Wait for activity on any of the file descriptors
-        if (select(maxFd + 1, &readFds, &writeFds, nullptr, nullptr) == -1) {
-            error("Failed to select");
-        }
+		// Add the client sockets to the set
+		for (int i = 0; i < MAX_CLIENTS; ++i) {
+		  //   int clientSocket = clientSockets[i];
+		    if (clients[i].socket != -1) {
+		        FD_SET(clients[i].socket, &readFds);
+		        maxFd = std::max(maxFd, clients[i].socket);
+		    }
+		}
 
-        // Check if there is a new client connection
-        if (FD_ISSET(serverSocket, &readFds)) {
-            // Accept the new connection
-            int clientSocket = accept(serverSocket, nullptr, nullptr);
-            if (clientSocket == -1) {
-                error("Failed to accept client connection");
-            }
+		// Use select() to handle events
+		int numReady = select(maxFd + 1, &readFds, nullptr, nullptr, nullptr);
+		if (numReady == -1) {
+		    error("select() failed");
+		}
 
-            // Find an available slot for the new client
-            int clientIndex = -1;
-            for (int i = 0; i < MAX_CLIENTS; i++) {
-                if (clients[i].socket == 0) {
-                    clientIndex = i;
-                    break;
-                }
-            }
+		// Check if a new connection is ready to be accepted
+		if (FD_ISSET(serverSocket, &readFds)) {
+		    struct sockaddr_in clientAddress;
+		    socklen_t clientAddressLength = sizeof(clientAddress);
+		    int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientAddressLength);
+		    if (clientSocket == -1) {
+		        error("Failed to accept connection");
+		    }
 
-            if (clientIndex >= 0) {
-                // Set the client socket to non-blocking mode
-                setNonBlocking(clientSocket);
+		    // Find an empty slot in the clientSockets array
+		    int index = -1;
+		    for (int i = 0; i < MAX_CLIENTS; ++i) {
+		        if (clients[i].socket == -1) {
+		            index = i;
+		            break;
+		        }
+		    }
 
-                // Add the new client to the client array
-                clients[clientIndex].socket = clientSocket;
-                clients[clientIndex].indice = clientIndex;
-                clients[clientIndex].inputBuffer.resize(MAX_BUFFER_SIZE);
-                clients[clientIndex].outputBuffer.resize(MAX_BUFFER_SIZE);
+		    if (index == -1) {
+		        // No empty slot available, close the new connection
+		        close(clientSocket);
+		        std::cout << "Rejected new connection: Too many clients" << std::endl;
+		    } else
+		    {
+			char passbuffer[MAX_BUFFER_SIZE];
+			for (int i = 3; i >= 0; i--)
+			{
+				if (i == 3)
+				{
+					std::string passPrompt = "Please enter PassWord : ";
+					send(clientSocket, passPrompt.c_str(), passPrompt.length(), 0);
+					ssize_t bytesRead = read(clientSocket, passbuffer, sizeof(passbuffer));
+					if (bytesRead > 0) {
+						passbuffer[bytesRead - 1] = '\0';
+						std::string username(passbuffer, bytesRead);
+					}
+					if (password == passbuffer)
+						break ;
+				}
+				else if (i > 0 && password != passbuffer)
+				{
+					std::string passPrompt = "Wrong Password (" + std::to_string(i) + " retry left) : ";
+					send(clientSocket, passPrompt.c_str(), passPrompt.length(), 0);
+					ssize_t bytesRead = read(clientSocket, passbuffer, sizeof(passbuffer));
+					if (bytesRead > 0) {
+						passbuffer[bytesRead - 1] = '\0';
+						std::string username(passbuffer, bytesRead);
+					}
+					if (password == passbuffer)
+						break ;
+				}
+				else
+				{
+					std::string msg = "Wrong Password ! No retry left";
+					ssize_t bytesWritten = send(clientSocket, msg.c_str(), msg.length(), 0);
+					if (bytesWritten < 0) {
+						error("Sending data failed");
+					}
+					close(clientSocket);
+				}
+				
+			}
+				if (password == passbuffer)
+				{
+					// Add the new client socket to the array
+					clients[index].socket = clientSocket;
+					std::cout << "New client connected: " << inet_ntoa(clientAddress.sin_addr) << std::endl;
+					if (clients[index].indice != 1)
+					{
+						std::string usernamePrompt = "Please enter your username: ";
+						send(clientSocket, usernamePrompt.c_str(), usernamePrompt.length(), 0);
+						char usernameBuffer[MAX_BUFFER_SIZE];
+						ssize_t bytesRead = read(clientSocket, usernameBuffer, sizeof(usernameBuffer));
+						if (bytesRead > 0) {
+							usernameBuffer[bytesRead - 1] = '\0';
+							std::string username(usernameBuffer, bytesRead);
+							// Assign the username to the client
+							clients[index].username = username;
+						}
+						std::string nicknamePrompt = "Please enter your nickname: ";
+						send(clientSocket, nicknamePrompt.c_str(), nicknamePrompt.length(), 0);
+						char nicknameBuffer[MAX_BUFFER_SIZE];
+						ssize_t bytesRead2 = read(clientSocket, nicknameBuffer, sizeof(nicknameBuffer));
+						if (bytesRead2 > 0) {
+							nicknameBuffer[bytesRead2 - 1] = '\0';
+							std::string nickname(nicknameBuffer, bytesRead);
+							// Assign the username to the client
+							clients[index].nickname = nickname;
+						}
+						clients[index].indice = 1;
+					}
+				}
+				// Update the maxFd value
+				maxFd = std::max(maxFd, clientSocket);
+			}
+		}
 
-                std::cout << "New client connected. Client index: " << clientIndex << std::endl;
-            } else {
-                // No available slot for the new client, so close the connection
-                close(clientSocket);
-                std::cout << "Maximum number of clients reached. Connection closed." << std::endl;
-            }
-        }
+		// Check if there is data to be read from the client sockets
+		for (int i = 0; i < MAX_CLIENTS; ++i)
+		{
+			int clientSocket = clients[i].socket;
+			if (clientSocket != -1 && FD_ISSET(clientSocket, &readFds)) {
+				// Read data from the client socket
+				ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
+				if (bytesRead < 0) {
+					error("Reading data failed");
+				} else if (bytesRead == 0)
+				{
+					// Connection closed by the client
+					close(clientSocket);
+					clients[i].socket = -1;  // Remove the client socket from the array
+					std::cout << "Client disconnected : "<< clients[i].username << std::endl;
+				}
+			else
+			{
+				buffer[bytesRead] = '\0';
+				// Process the received data
 
-        // Process client activity
-        for (int i = 0; i < MAX_CLIENTS; i++) {
-            Client& client = clients[i];
-            int clientSocket = client.socket;
+				std::string message(buffer);
+				if (checkArg(message, clientSocket) == -1)
+					continue ;
+				else if (message.substr(0, 8) == "/PRIVMSG")
+				{
+					int tmp = 0;
+					// Extract the target and message from the user input
+					std::string targetAndMessage = message.substr(9); // Remove the command prefix and space
+					if (targetAndMessage.find("#") != std::string::npos)
+					{
+						targetAndMessage = message.substr(10);
+						tmp = 1;
+					}
+					std::string::size_type pos = targetAndMessage.find(" ");
+					std::string target = targetAndMessage.substr(0, pos); // Extract the target (username or channel)
+					std::string text = targetAndMessage.substr(pos + 1); // Extract the message text
 
-            if (FD_ISSET(clientSocket, &readFds)) {
-                ssize_t bytesRead = readFromSocket(clientSocket, client.inputBuffer);
-                if (bytesRead > 0) {
-                    // Process the received data
-                    processReceivedData(client);
-                } else if (bytesRead == 0) {
-                    // Connection closed by the client
-                    std::cout << "Client disconnected. Client index: " << client.indice << std::endl;
+					// Form the PRIVMSG command to be sent to the server
+					std::string privmsgCommand = clients[i].username + " : " + text;
+					if (tmp == 0)
+					{
+						int mem = searchByUsername(target, clients, MAX_CLIENTS);// Send the PRIVMSG command to the client
+						if (mem == -1)
+							errorUser(target + ": USER NOT FOUND", clientSocket);
+						else
+						{
+							ssize_t bytesWritten = send(clients[mem].socket, privmsgCommand.c_str(), privmsgCommand.length(), 0);
+							if (bytesWritten < 0) {
+								error("Sending data failed");
+							}
+						}
+					}
+					else
+					{
+						int ind = searchBychannelname(target, channels, MAX_CHANNELS);
+						if (ind == -1)
+							errorUser(target + ": CHANNEL NOT FOUND", clientSocket);
+						else if (strcmp(channels[ind].PRVIMSG_Index.c_str(), "yes") == 0 && searchIfExist(channels[ind].users_sockets, clientSocket))
+						{
+							for (std::size_t i = 0; i < channels[ind].users_sockets.size(); ++i)
+							{
+								ssize_t bytesWritten = send(channels[ind].users_sockets[i], privmsgCommand.c_str(), privmsgCommand.length(), 0);
+								if (bytesWritten < 0) {
+									error("Sending data failed");
+								}
+							}
+						}
+						else
+						{
+							std::string msgPrompt = "No permission To send PRIVMSG in this Channel \n";
+							send(clients[i].socket, msgPrompt.c_str(), msgPrompt.length(), 0);
+						}
+					}
+				}
+				else if (message.substr(0, 5) == "/JOIN")
+				{
+					// Extract the Channel name and message from the user input
+					std::string channelAndMessage = message.substr(6); // Remove the command prefix and space
+					std::string::size_type pos = channelAndMessage.find(" ");
+					std::string channel = channelAndMessage.substr(0); // Extract the channel name ---room1
+					channel.erase(channel.find_last_not_of(" \t\r\n") + 1);
+					// std::string text = channelAndMessage.substr(pos + 1); // Extract the message text
 
-                    // Close the socket and clear the client data
-                    close(clientSocket);
-                    client.socket = 0;
-                    client.nickname.clear();
-                    client.username.clear();
-                    client.inputBuffer.clear();
-                    client.outputBuffer.clear();
-                }
-            }
-
-            if (FD_ISSET(clientSocket, &writeFds)) {
-                // Check if there is data to send in the output buffer
-                if (!client.outputBuffer.empty()) {
-                    ssize_t bytesWritten = writeToSocket(clientSocket, client.outputBuffer);
-                    if (bytesWritten > 0) {
-                        // Remove the sent data from the output buffer
-                        client.outputBuffer.erase(client.outputBuffer.begin(), client.outputBuffer.begin() + bytesWritten);
-                    }
-                }
-            }
-        }
-    }
-
-    // Close the server socket
-    close(serverSocket);
-
-    return 0;
+					//Check if the channel exist
+					if (searchBychannelname(channel, channels, MAX_CHANNELS) != -1)
+						channelExist(clientSocket, channels, clients, channel, i);
+					else//if the channel not exist
+						channelNotExist(clientSocket, channels, clients, channel, i, &channel_index);
+				}
+				else if (message.substr(0, 5) == "/KICK")
+				{
+					// Extract the Channel name and username from the user input
+					std::string channelAnduser = message.substr(6); // Remove the command prefix and space
+					std::string::size_type pos = channelAnduser.find(" ");
+					std::string channelname = channelAnduser.substr(1, pos - 1); // Extract the channel starting from 1 to avoid '#'
+					std::string userAndmsg = channelAnduser.substr(pos + 1);
+					std::string user;
+					std::string::size_type poss = userAndmsg.find(" ");//poss is a giant number, probably due to having no space after the username, I changed to it \n so it's getting the correct username
+					if (poss != std::string::npos)// The " " character was found in the string.
+					{
+						user = userAndmsg.substr(0, poss); // Extract the username
+						std::string msg = userAndmsg.substr(poss + 1);
+					}
+					else
+					{
+						user = userAndmsg.substr(0); // Extract the username
+						user.erase(user.find_last_not_of(" \t\r\n") + 1);
+					}
+					kickUser(channels, clients, channelname, user, i);
+				}
+				else if (message.substr(0, 6) == "/TOPIC")
+				{
+					std::string channelAndmsg = message.substr(7); // Remove the command prefix and space
+					std::string::size_type pos = channelAndmsg.find(" ");
+					if (pos != std::string::npos)// The " " character was found in the string.
+					{
+						std::string channelname = channelAndmsg.substr(1, pos - 1); // Extract the channel starting from 1 to avoid '#'
+						std::string msg = channelAndmsg.substr(pos + 1); // Extract the message text
+						msg.erase(msg.find_last_not_of(" \t\r\n") + 1);
+						if (searchBychannelname(channelname, channels, MAX_CHANNELS) == -1)
+							errorUser("CHANNEL NOT FOUND", clientSocket);
+						else
+							channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].topic = msg;
+							std::string privmsgCommand = "New TOPIC is set: " + msg + "\r\n";
+							ssize_t bytesWritten = send(clients[i].socket, privmsgCommand.c_str(), privmsgCommand.length(), 0);
+							if (bytesWritten < 0) {
+								error("Sending data failed");
+							}
+					}
+					else // The " " character was not found in the string --> that mean there is no msg
+					{
+						std::string channelname = channelAndmsg.substr(pos + 2);
+						channelname.erase(channelname.find_last_not_of(" \t\r\n") + 1);// Remove trailing whitespace characters
+						int ind = searchBychannelname(channelname, channels, MAX_CHANNELS);
+						if (ind == -1)
+							errorUser("CHANNEL NOT FOUND", clients[i].socket);
+						else
+						{
+							std::string privmsgCommand = "TOPIC is : " + channels[ind].topic + "\r\n";
+							ssize_t bytesWritten = send(clients[i].socket, privmsgCommand.c_str(), privmsgCommand.length(), 0);
+							if (bytesWritten < 0) {
+								error("Sending data failed");
+							}
+						}
+					}
+				}
+				else if (message.substr(0, 5) == "/MODE")/// should check if the client is ADMIN
+				{
+					std::string channelAndmsg = message.substr(6); // Remove the command prefix and space--> ex : "#room +i testmsg"
+					std::string::size_type pos = channelAndmsg.find(" "); //--> ex : 5
+					std::string channel = channelAndmsg.substr(1, pos - 1); //--> ex : "room"
+					if (searchBychannelname(channel, channels, MAX_CHANNELS) == -1)
+						errorUser("CHANNEL NOT FOUND", clientSocket);
+					else if (isAdmin(channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users, clients[i].username)){
+					std::string argsAndmsg = channelAndmsg.substr(pos + 1); //--> ex : "+i testmsg"
+					std::string::size_type poss = argsAndmsg.find(" ");// ex : 2
+					if (poss != std::string::npos)// The " " character was found in the string.
+					{
+						std::string args = argsAndmsg.substr(0, poss); // Extract the args with the sign --> ex : "+i"
+						std::string msg = argsAndmsg.substr(poss + 1); // Extract the message text --> ex : "testmsg"
+						msg.erase(msg.find_last_not_of(" \t\r\n") + 1);// Remove trailing whitespace characters
+						modeOptions(channels, clients, channel, args, msg , i);
+					}
+					else // The " " character was not found in the string --> that mean there is no msg
+					{
+						std::string args = argsAndmsg.substr(0);
+						modeNoOptions(channels, clients, channel, args, i);
+					}
+					}
+					else{
+						std::string kickPrompt = "You are not an ADMIN \n";
+						send(clients[i].socket, kickPrompt.c_str(), kickPrompt.length(), 0);
+					}
+				}
+				else if (message.substr(0, 7) == "/INVITE")
+				{
+					// Extract the Channel name and username from the user input
+					std::string channelAnduser = message.substr(8); // Remove the command prefix and space
+					std::string::size_type pos = channelAnduser.find(" ");
+					std::string channelname = channelAnduser.substr(1, pos - 1); // Extract the channel starting from 1 to avoid '#'
+					std::string user = channelAnduser.substr(pos + 1);
+					user.erase(user.find_last_not_of(" \t\r\n") + 1);
+					if (searchBychannelname(channelname, channels, MAX_CHANNELS) != -1)
+					{
+						if (searchByUsername(user, clients, MAX_CLIENTS) != -1)
+							inviteUser(clients[searchByUsername(user, clients, MAX_CLIENTS)].socket, channels, clients, channelname, searchByUsername(user, clients, MAX_CLIENTS));
+						else
+							errorUser("USER NOT FOUND", clientSocket);
+					}
+					else
+						errorUser("CHANNEL NOT FOUND", clientSocket);
+				}
+				else if (message.substr(0, 5) == "/EXIT")
+				{
+					close(serverSocket);
+					system("leaks ircserv");
+					return 0;
+				}
+				}
+			}
+		}
+	}
+	
+	// Close the server socket
+	close(serverSocket);
+	system("leaks ircserv");
+	return 0;
 }
-
