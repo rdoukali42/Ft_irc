@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:08:32 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/18 19:13:00 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/18 20:24:03 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 Channel channels[MAX_CHANNELS];
 Client clients[MAX_CLIENTS];
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 	if (argc < 3)
 	{
@@ -26,6 +26,13 @@ int main(int argc, char *argv[])
 	const int port = std::stoi(argv[1]);
 	std::string password = argv[2];
 
+	// Create a socket
+	int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (serverSocket == -1) {
+	    error("Failed to create socket");
+	}
+
+	// Prepare server address structure
 	struct sockaddr_in serverAddress;
 	memset(&serverAddress, 0, sizeof(serverAddress));
 	serverAddress.sin_family = AF_INET;
