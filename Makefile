@@ -6,7 +6,7 @@
 #    By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/17 00:54:12 by rdoukali          #+#    #+#              #
-#    Updated: 2023/06/17 01:10:46 by rdoukali         ###   ########.fr        #
+#    Updated: 2023/06/18 19:17:43 by rdoukali         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -22,7 +22,7 @@ OBJ = 	$(SRC:.cpp=.o)
 all: $(NAME)
 
 %.o: %.c
-	c++ -c $^ -o $@
+	@c++ -c $^ -o $@
 
 $(NAME): $(OBJ)
 	@$(CC) $(FLAGS) $(OBJ) -o $(NAME)

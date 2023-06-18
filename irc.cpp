@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:08:32 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/17 01:08:59 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/18 19:13:00 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -221,7 +221,7 @@ int main(int argc, char* argv[])
 					std::string text = targetAndMessage.substr(pos + 1); // Extract the message text
 
 					// Form the PRIVMSG command to be sent to the server
-					std::string privmsgCommand = clients[i].username + " say : " + text + "\r\n";
+					std::string privmsgCommand = clients[i].username + " : " + text;
 					if (tmp == 0)
 					{
 						int mem = searchByUsername(target, clients, MAX_CLIENTS);// Send the PRIVMSG command to the client
@@ -301,10 +301,16 @@ int main(int argc, char* argv[])
 					{
 						std::string channelname = channelAndmsg.substr(1, pos - 1); // Extract the channel starting from 1 to avoid '#'
 						std::string msg = channelAndmsg.substr(pos + 1); // Extract the message text
+						msg.erase(msg.find_last_not_of(" \t\r\n") + 1);
 						if (searchBychannelname(channelname, channels, MAX_CHANNELS) == -1)
 							errorUser("CHANNEL NOT FOUND", clientSocket);
 						else
 							channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].topic = msg;
+							std::string privmsgCommand = "New TOPIC is set: " + msg + "\r\n";
+							ssize_t bytesWritten = send(clients[i].socket, privmsgCommand.c_str(), privmsgCommand.length(), 0);
+							if (bytesWritten < 0) {
+								error("Sending data failed");
+							}
 					}
 					else // The " " character was not found in the string --> that mean there is no msg
 					{
@@ -360,17 +366,28 @@ int main(int argc, char* argv[])
 					std::string user = channelAnduser.substr(pos + 1);
 					user.erase(user.find_last_not_of(" \t\r\n") + 1);
 					if (searchBychannelname(channelname, channels, MAX_CHANNELS) != -1)
-						inviteUser(clients[searchByUsername(user, clients, MAX_CLIENTS)].socket, channels, clients, channelname, searchByUsername(user, clients, MAX_CLIENTS));
+					{
+						if (searchByUsername(user, clients, MAX_CLIENTS) != -1)
+							inviteUser(clients[searchByUsername(user, clients, MAX_CLIENTS)].socket, channels, clients, channelname, searchByUsername(user, clients, MAX_CLIENTS));
+						else
+							errorUser("USER NOT FOUND", clientSocket);
+					}
 					else
 						errorUser("CHANNEL NOT FOUND", clientSocket);
 				}
-			    }
+				else if (message.substr(0, 5) == "/EXIT")
+				{
+					close(serverSocket);
+					system("leaks ircserv");
+					return 0;
+				}
+				}
 			}
 		}
 	}
 	
 	// Close the server socket
 	close(serverSocket);
-	
+	system("leaks ircserv");
 	return 0;
 }

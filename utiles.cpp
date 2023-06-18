@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:39:33 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/17 00:20:44 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/18 18:55:51 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,6 +166,10 @@ int checkArg(const std::string str, int clientSocket)
 			errorUser("/PRIVMSG <#Channel/USER> <New_Topic>", clientSocket);
 		else
 			return 1;
+	}
+	if (str.substr(0, 5) == "/EXIT")
+	{
+		return 1;
 	}
 	else
 		errorUser("COMMAND NOT FOUND", clientSocket);
