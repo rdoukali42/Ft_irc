@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 03:05:39 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/18 19:13:05 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/19 22:04:06 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ void inviteUser(const int clientSocket,Channel *channels,const Client *clients, 
 			if (!searchIfExist(channels[channel_index2].users_sockets, clients[i].socket))
 			{
 				channels[channel_index2].users_sockets.push_back(clients[i].socket);
+				sendUser("You've been invited to channel " + channels[channel_index2].name, clients[i].socket);
 			}
 			else
 			{

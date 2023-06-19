@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:39:33 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/19 04:58:43 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/19 21:55:04 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,7 +158,7 @@ void listAdmins(Channel *channels, Client *clients, int ind, int ch_in)
 	{
 		if (isAdmin(channels[ch_in].admin_users, clients[i].username))
 		{
-			sendUser("     + ADMIN (" + std::to_string(j) + ") : " + clients[i].username, clients[ind].socket);
+			sendUser("    -> ADMIN (" + std::to_string(j) + ") : " + clients[i].username, clients[ind].socket);
 			j++;
 		}
 	}
@@ -173,7 +173,7 @@ void listUsers(Channel *channels, Client *clients, int ind, int ch_in)
 		{
 			if (!isAdmin(channels[ch_in].admin_users, clients[i].username))
 			{
-				sendUser("     + USER (" + std::to_string(j) + ") : " + clients[i].username, clients[ind].socket);
+				sendUser("     -> USER (" + std::to_string(j) + ") : " + clients[i].username, clients[ind].socket);
 				j++;
 			}
 		}
@@ -182,10 +182,12 @@ void listUsers(Channel *channels, Client *clients, int ind, int ch_in)
 
 void listChannels(Channel *channels, Client *clients, int ind)
 {
+	int j = 1;
 	for(int i = 0; i < MAX_CHANNELS; i++)
 	{
 		if (channels[i].name != "")
 		{
+			sendUser("		CHANNEL (" + std::to_string(j) + ")" , clients[ind].socket);
 			sendUser("CHANNEL NAME        : " + channels[i].name, clients[ind].socket);
 			sendUser("CHANNEL TOPIC       : " + channels[i].topic, clients[ind].socket);
 			if (channels[i].limit_mode == 1)
@@ -209,6 +211,7 @@ void listChannels(Channel *channels, Client *clients, int ind)
 			sendUser("USERS :", clients[ind].socket);
 			listUsers(channels, clients, ind, i);
 			sendUser("--------------------------------------------------------", clients[ind].socket);
+			j++;
 		}
 	}
 }
@@ -294,6 +297,6 @@ int checkArg(const std::string str, int clientSocket)
 		return 1;
 	}
 	else
-		errorUser("COMMAND NOT FOUND", clientSocket);
+		errorUser("INVALID COMMAND!!", clientSocket);
 	return -1;
 }
