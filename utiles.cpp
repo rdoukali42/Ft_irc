@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:39:33 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/18 18:55:51 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/19 04:58:43 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,16 @@ void error(const std::string& msg)
 	return ;
 }
 
+int ifWord(const std::string str)
+{
+	for(int i = 0; i < str.length(); i++){
+		if ((str[i] >= 'a' && str[i] <= 'z') || (str[i] >= 'A' && str[i] <= 'Z'))
+			return 1;
+		else if (str[i] >= '0' && str[i] <= '9')
+			return 1;
+	}
+	return 0;
+}
 
 bool searchIfExist(const std::vector<int>& sockets, const int& clientSocket)
 {
@@ -97,6 +107,13 @@ void errorUser(const std::string& msg, int clientSocket)
 	return ;
 }
 
+void sendUser(const std::string& msg, int clientSocket)
+{
+	std::string msgError = msg + "\n";
+	send(clientSocket, msgError.c_str(), msgError.length(), 0);
+	return ;
+}
+
 int countWords(const std::string& str)
 {
 	std::istringstream iss(str);
@@ -121,6 +138,79 @@ int checkUserChannel(Channel *channels,const Client *clients, std::string user, 
 		return 0;
 	}
 	return 1;
+}
+
+int numOfAdmins(Channel *channels, Client *clients, int ch_in)
+{
+	int j = 0;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (isAdmin(channels[ch_in].admin_users, clients[i].username))
+			j++;
+	}
+	return j;
+}
+
+void listAdmins(Channel *channels, Client *clients, int ind, int ch_in)
+{
+	int j = 1;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (isAdmin(channels[ch_in].admin_users, clients[i].username))
+		{
+			sendUser("     + ADMIN (" + std::to_string(j) + ") : " + clients[i].username, clients[ind].socket);
+			j++;
+		}
+	}
+}
+
+void listUsers(Channel *channels, Client *clients, int ind, int ch_in)
+{
+	int j = 1;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (searchIfExist(channels[ch_in].users_sockets, clients[i].socket))
+		{
+			if (!isAdmin(channels[ch_in].admin_users, clients[i].username))
+			{
+				sendUser("     + USER (" + std::to_string(j) + ") : " + clients[i].username, clients[ind].socket);
+				j++;
+			}
+		}
+	}
+}
+
+void listChannels(Channel *channels, Client *clients, int ind)
+{
+	for(int i = 0; i < MAX_CHANNELS; i++)
+	{
+		if (channels[i].name != "")
+		{
+			sendUser("CHANNEL NAME        : " + channels[i].name, clients[ind].socket);
+			sendUser("CHANNEL TOPIC       : " + channels[i].topic, clients[ind].socket);
+			if (channels[i].limit_mode == 1)
+				sendUser("CHANNEL LIMIT       : " + std::to_string(channels[i].limit), clients[ind].socket);
+			else
+				sendUser("CHANNEL LIMIT       : NOT SET", clients[ind].socket);
+			if (channels[i].key_mode == 0)
+				sendUser("CHANNEL PASSWORD    : NOT ACTIVATED", clients[ind].socket);
+			else
+				sendUser("CHANNEL PASSWORD    : ACTIVATED", clients[ind].socket);
+			if (channels[i].invite_only == 0)
+				sendUser("CHANNEL INVITE MODE : NOT ACTIVATED", clients[ind].socket);
+			else
+				sendUser("CHANNEL INVITE MODE : ACTIVATED", clients[ind].socket);
+			if (strcmp(channels[i].PRVIMSG_Index.c_str(), "yes") == 0)
+				sendUser("CHANNEL PRVMSG MODE : ACTIVATED", clients[ind].socket);
+			else
+				sendUser("CHANNEL PRVMSG MODE : NOT ACTIVATED", clients[ind].socket);
+			sendUser("ADMINS :", clients[ind].socket);
+			listAdmins(channels, clients, ind, i);
+			sendUser("USERS :", clients[ind].socket);
+			listUsers(channels, clients, ind, i);
+			sendUser("--------------------------------------------------------", clients[ind].socket);
+		}
+	}
 }
 
 int checkArg(const std::string str, int clientSocket)
@@ -167,7 +257,39 @@ int checkArg(const std::string str, int clientSocket)
 		else
 			return 1;
 	}
+	else if (str.substr(0, 6) == "/PART ")
+	{
+		if (countWords(str) != 2)
+			errorUser("/PART <#Channel>", clientSocket);
+		else
+			return 1;
+	}
+	else if (str.substr(0, 7) == "/WHOIS ")
+	{
+		if (countWords(str) != 2)
+			errorUser("/WHOIS <user>", clientSocket);
+		else
+			return 1;
+	}
+	else if (str.substr(0, 6) == "/NICK ")
+	{
+		if (countWords(str) != 2)
+			errorUser("/NICK <new_nickname>", clientSocket);
+		else
+			return 1;
+	}
+	else if (str.substr(0, 5) == "/LIST")
+	{
+		if (countWords(str) != 1)
+			errorUser("/LIST", clientSocket);
+		else
+			return 1;
+	}
 	if (str.substr(0, 5) == "/EXIT")
+	{
+		return 1;
+	}
+	if (str.substr(0, 5) == "/QUIT")
 	{
 		return 1;
 	}

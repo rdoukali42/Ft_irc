@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 01:32:47 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/17 01:06:02 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/19 04:48:05 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,12 @@ void removeAdmin(Channel *channels, Client *clients, int client_index, int chann
 		if (*it != clients[client_index].socket) {
 			if(isAdmin(channels[channel_index].admin_users, clients[searchBySocket(*it, clients, MAX_CLIENTS)].username) == 0)
 			{
-				channels[channel_index].admin_users.push_back(clients[searchBySocket(*it, clients, MAX_CLIENTS)].username);
+				if (numOfAdmins(channels, clients, channel_index) == 1)
+				{
+					channels[channel_index].admin_users.push_back(clients[searchBySocket(*it, clients, MAX_CLIENTS)].username);
+					std::string channelFullPrompt = "You are now ADMIN in " + channels[channel_index].name +"\n";
+					send(clients[searchBySocket(*it, clients, MAX_CLIENTS)].socket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+				}
 				for (int i = 0 ; i < channels[channel_index].admin_users.size(); i++) {
 					if (strcmp(channels[channel_index].admin_users[i].c_str(), clients[client_index].username.c_str()) == 0)
 					{
@@ -34,8 +39,6 @@ void removeAdmin(Channel *channels, Client *clients, int client_index, int chann
 					}
 					i++;
 				}
-				std::string channelFullPrompt = "You are now ADMIN in " + channels[channel_index].name +"\n";
-				send(clients[searchBySocket(*it, clients, MAX_CLIENTS)].socket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
 				return ;
 			}
 		}
@@ -53,14 +56,19 @@ void kickUser(Channel *channels, Client *clients, std::string channelname, std::
 		errorUser(user + ": USER NOT FOUND", clients[i].socket);
 	else if (isAdmin(channels[ch_ind].admin_users, clients[i].username))
 	{
-		std::string msgPrompt = "You've been Kicked OUT by " + clients[i].username + " From " + channels[ch_ind].name + "\n";
+		std::string msgPrompt;
+		if (user == clients[i].username)
+			msgPrompt = "You Quit " + channels[ch_ind].name + "\n";
+		else
+			msgPrompt = "You've been Kicked OUT by " + clients[i].username + " From " + channels[ch_ind].name + "\n";
 		send(clients[cl_ind].socket, msgPrompt.c_str(), msgPrompt.length(), 0);
 		if(isAdmin(channels[ch_ind].admin_users, clients[cl_ind].username))
 			removeAdmin(channels, clients, cl_ind, ch_ind);
 		removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
 		if (channels[ch_ind].users_sockets.size() == 0)
 		{
-			channels[ch_ind].name = "474985>955985";
+			std::cout << "Channel " << channels[ch_ind].name << " Deleted" << std::endl;
+			channels[ch_ind].name = "";
 		}
 	}
 	else

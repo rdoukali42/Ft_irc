@@ -6,20 +6,47 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 02:47:34 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/17 00:12:56 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/19 01:22:51 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "irc.hpp"
 
+// void modeOptions(Channel *channels,const Client *clients, std::string channel,std::string args,std::string msg, const int i)
+// {
+// 	if (args == "+l")
+// 	{
+// 		int new_limit = std::stoi(msg);
+// 		std::cout << "new_limit is :: " << new_limit << "|" << std::endl;
+// 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit_mode = 1;
+// 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit = new_limit;
+// 	}
 void modeOptions(Channel *channels,const Client *clients, std::string channel,std::string args,std::string msg, const int i)
 {
 	if (args == "+l")
 	{
-		int new_limit = std::stoi(msg);
-		std::cout << "new_limit is :: " << new_limit << "|" << std::endl;
-		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit_mode = 1;
-		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit = new_limit;
+		int new_limit;// = std::stoi(msg);
+
+		try{
+			char *end;
+			errno = 0;
+			long limit = (std::strtol(msg.c_str(), &end, 10));
+			if ((errno == ERANGE && (limit == LONG_MAX || limit == LONG_MIN)) || (errno != 0 && limit == 0)) 
+				throw std::runtime_error("new limit is invalid!");
+			if (end == msg.c_str() || *end != '\0')
+				throw std::runtime_error("new limit is not a number!");
+			if (*end == '\0')
+				new_limit = static_cast<int>(limit);
+			else
+				throw std::runtime_error("new limit is not a number!");
+			std::cout << "new_limit is :: " << new_limit << "|" << std::endl;
+			channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit_mode = 1;
+			channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit = new_limit;
+		}
+		catch (std::runtime_error &e){
+			std::string limitErrorPrompt = "Error: " + std::string(e.what()) +"\n";
+			send(clients[i].socket, limitErrorPrompt.c_str(), limitErrorPrompt.length(), 0);//<<
+		}
 	}
 	else if ( args == "+o")
 	{
@@ -49,11 +76,8 @@ void modeOptions(Channel *channels,const Client *clients, std::string channel,st
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].key_mode = 1;
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].password = msg;
 	}
-	else if (args == "+t")
-	{
-		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].topic = msg;
-	}
-	
+	else
+		errorUser("/MODE <#channel> <+l|+k|+o|-o> <limit/user/passwsord>", clients[i].socket);
 }
 
 void modeNoOptions(Channel *channels,const Client *clients, std::string channel,std::string args, const int i)
@@ -79,6 +103,16 @@ void modeNoOptions(Channel *channels,const Client *clients, std::string channel,
 	}
 	else if (args == "-t")
 	{
-		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].topic = "";
+		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].topic_mode = 0;
+		std::string limitPrompt = "Topic mode is Unset";
+		send(clients[i].socket, limitPrompt.c_str(), limitPrompt.length(), 0);;
 	}
+	else if (args == "+t")
+	{
+		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].topic_mode = 1;
+		std::string limitPrompt = "Topic mode is Set";
+		send(clients[i].socket, limitPrompt.c_str(), limitPrompt.length(), 0);
+	}
+	else
+		errorUser("/MODE <#channel> <-t|+t|+i|-i|-l|-k>", clients[i].socket);
  }

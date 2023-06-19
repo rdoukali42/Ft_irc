@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:07:45 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/17 00:21:57 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/19 04:25:33 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,7 @@ struct Channel
 	int index;
 	int limit;
 	int invite_only;
+	int topic_mode;
 	int key_mode;
 	int limit_mode;
 	std::vector<int> users_sockets;
@@ -69,8 +70,13 @@ int searchByUsername(const std::string& target, const Client* clients, int numCl
 int searchBychannelname(const std::string& target, const Channel* channels, int numChannels);
 int checkArg(const std::string str,int clientSocket);
 void errorUser(const std::string& msg,int  clientSocket);
+void sendUser(const std::string& msg, int clientSocket);
 void error(const std::string& msg);
+int numOfAdmins(Channel *channels, Client *clients, int ch_in);
+void listChannels(Channel *channels, Client *clients, int ind);
+void removeAdmin(Channel *channels, Client *clients, int client_index, int channel_index);
 int checkUserChannel(Channel *channels,const Client *clients, std::string user, std::string channel, int clientSocket);
+int ifWord(const std::string str);
 
 
 #endif
