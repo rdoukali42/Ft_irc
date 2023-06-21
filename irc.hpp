@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   irc.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
+/*   By: adinari <adinari@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:07:45 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/19 04:25:33 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/21 02:39:27 by adinari          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,8 @@ void listChannels(Channel *channels, Client *clients, int ind);
 void removeAdmin(Channel *channels, Client *clients, int client_index, int channel_index);
 int checkUserChannel(Channel *channels,const Client *clients, std::string user, std::string channel, int clientSocket);
 int ifWord(const std::string str);
-
+void erase_spaces(std::string &str);
+std::vector<std::string> split_str(std::string str, char delim);
+std::string getMsg(std::string& str);
 
 #endif

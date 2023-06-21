@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utiles.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
+/*   By: adinari <adinari@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:39:33 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/19 21:55:04 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/21 07:16:40 by adinari          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,15 +89,77 @@ int searchBychannelname(const std::string& target, const Channel* channels, int 
 	return -1;
 }
 
+
 std::vector<std::string> split_str(std::string str, char delim)
 {
 	std::vector<std::string> row;
 	std::string word;
 	std::stringstream s(str);
 	while (std::getline(s, word, delim)) {
-		row.push_back(word);
+		if (word.size())
+			row.push_back(word);
+		// std::cout << "word =" + word + "." << std::endl;
 	}
 	return row;
+}
+
+std::string getMsg(std::string& str){
+    std::string result = str;
+    std::string::size_type pos = str.find(" ");
+    
+    if (pos != std::string::npos) {
+        pos = str.find(" ", pos + 1); // Find the second space
+        if (pos != std::string::npos) {
+            result = str.substr(pos + 1); // Extract the substring after the second space
+        }
+    }
+    // std::cout << "getMsg: " + result + "\n";
+    return result;
+}
+
+int countWords(const std::string& str)
+{
+	// std::cout << "XXXXXXXXXXXXXX" << std::endl;
+	std::istringstream iss(str);
+	int count = 0;
+	std::string word;
+	
+	while (iss >> word)
+		count++;
+	// std::cout << "str = " << str << std::endl;
+	// std::cout << "w_count = " << count << std::endl;
+	// std::cout << "YYYYYYYYYYYYYY" << std::endl;
+	return count;
+}
+
+void erase_spaces(std::string& str)
+{
+	int fw = 0;
+    std::string res;
+	std::vector<std::string> row;
+	std::string word;
+	std::stringstream s(str);
+	while (std::getline(s, word, ' ') && fw != 2) {
+		fw++;
+		row.push_back(word);
+	}
+
+	for (std::vector<std::string>::const_iterator it = row.begin(); it != row.end(); ++it)
+	{
+        res += *it;
+		if (fw)
+		{
+			res += " ";
+			fw = 0;
+		}
+	}
+	if (countWords(str) <= 2)
+	{
+		str = res;
+		return ;
+	}
+    std::string remaining = getMsg(str);
+	str = res + " " + remaining;
 }
 
 void errorUser(const std::string& msg, int clientSocket)
@@ -114,16 +176,7 @@ void sendUser(const std::string& msg, int clientSocket)
 	return ;
 }
 
-int countWords(const std::string& str)
-{
-	std::istringstream iss(str);
-	int count = 0;
-	std::string word;
-	
-	while (iss >> word)
-		count++;
-	return count;
-}
+
 
 int checkUserChannel(Channel *channels,const Client *clients, std::string user, std::string channel, int clientSocket)
 {
@@ -218,6 +271,9 @@ void listChannels(Channel *channels, Client *clients, int ind)
 
 int checkArg(const std::string str, int clientSocket)
 {
+	// std::string word;
+	// std::stringstream s(str);
+	// std::getline(s, word, ' ');
 	if (str.substr(0, 6) == "/KICK ")
 	{
 		if (countWords(str) < 3 || countWords(str) > 4)
@@ -252,6 +308,7 @@ int checkArg(const std::string str, int clientSocket)
 			errorUser("/JOIN <#Channel>", clientSocket);
 		else
 			return 1;
+			std::cout << "join error!" << std::endl;
 	}
 	else if (str.substr(0, 9) == "/PRIVMSG ")
 	{
@@ -281,21 +338,17 @@ int checkArg(const std::string str, int clientSocket)
 		else
 			return 1;
 	}
-	else if (str.substr(0, 5) == "/LIST")
+	else if (str.substr(0, 6) == "/LIST " || str.substr(0, 6) == "/LIST\0")
 	{
 		if (countWords(str) != 1)
 			errorUser("/LIST", clientSocket);
 		else
 			return 1;
 	}
-	if (str.substr(0, 5) == "/EXIT")
-	{
+	else if (str.substr(0, 6) == "/EXIT " || str.substr(0, 6) == "/EXIT\0")
 		return 1;
-	}
-	if (str.substr(0, 5) == "/QUIT")
-	{
+	else if (str.substr(0, 6) == "/QUIT " || str.substr(0, 6) == "/QUIT\0")
 		return 1;
-	}
 	else
 		errorUser("INVALID COMMAND!!", clientSocket);
 	return -1;

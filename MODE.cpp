@@ -3,24 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   MODE.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
+/*   By: adinari <adinari@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 02:47:34 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/19 01:22:51 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/20 01:57:34 by adinari          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "irc.hpp"
 
-// void modeOptions(Channel *channels,const Client *clients, std::string channel,std::string args,std::string msg, const int i)
-// {
-// 	if (args == "+l")
-// 	{
-// 		int new_limit = std::stoi(msg);
-// 		std::cout << "new_limit is :: " << new_limit << "|" << std::endl;
-// 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit_mode = 1;
-// 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit = new_limit;
-// 	}
 void modeOptions(Channel *channels,const Client *clients, std::string channel,std::string args,std::string msg, const int i)
 {
 	if (args == "+l")
