@@ -47,9 +47,10 @@ struct Channel
 int channelExist(const int clientSocket,Channel *channels,const Client *clients, std::string channel, const int i);
 void channelNotExist(const int clientSocket,Channel *channels,const Client *clients, std::string channel, const int i, int *channel_index);
 void kickUser(Channel *channels,Client *clients, std::string channelname, std::string user, const int i);
-void modeOptions(Channel *channels,const Client *clients, std::string channel,std::string args,std::string msg, const int i);
-void modeNoOptions(Channel *channels,const Client *clients, std::string channel,std::string args, const int i);
+void modeOptions(Channel *channels, Client *clients, std::string channel,std::string args,std::string msg, const int i);
+void modeNoOptions(Channel *channels, Client *clients, std::string channel,std::string args, const int i);
 void inviteUser(const int clientSocket,Channel *channels,const Client *clients, std::string channel, const int i);
+void PartUser(Channel *channels, Client *clients, std::string channelname, std::string user, const int i);
 
 void removeClient(std::vector<int>& users_sockets, int clientSocket);
 bool searchIfExist(const std::vector<int>& sockets, const int& clientSocket);

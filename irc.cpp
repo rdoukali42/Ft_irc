@@ -14,38 +14,33 @@ int main(int argc, char* argv[])
 	const int port = std::stoi(argv[1]);
 	std::string password = argv[2];
 
-	// Create a socket
 	int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (serverSocket == -1) {
-	    error("Failed to create socket");
+		error("Failed to create socket");
 	}
 
-	// Prepare server address structure
 	struct sockaddr_in serverAddress;
 	memset(&serverAddress, 0, sizeof(serverAddress));
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_addr.s_addr = INADDR_ANY;
 	serverAddress.sin_port = htons(port);
 
-	// Bind the socket to the specified address and port
 	if (bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1) {
-	    error("Failed to bind socket");
+		error("Failed to bind socket");
 	}
 
-	// Start listening for incoming connections
 	if (listen(serverSocket, SOMAXCONN) == -1) {
-	    error("Failed to listen for connections");
+		error("Failed to listen for connections");
 	}
 
 	std::cout << "Server is listening on port " << port << std::endl;
 
 	char buffer[MAX_BUFFER_SIZE];
 
-	// Create an array of client sockets
-	//int clientSockets[MAX_CLIENTS];
-	for (int i = 0; i < MAX_CLIENTS; ++i) {
-	    clients[i].socket = -1;
-	   clients[i].indice = 0;
+	for (int i = 0; i < MAX_CLIENTS; ++i)
+	{
+		clients[i].socket = -1;
+		clients[i].indice = 0;
 	}
 
 	fd_set readFds;
@@ -54,49 +49,44 @@ int main(int argc, char* argv[])
 
 	while (true)
 	{
-		// Clear the set and add the server socket to the set
 		FD_ZERO(&readFds);
 		FD_SET(serverSocket, &readFds);
 
-		// Add the client sockets to the set
-		for (int i = 0; i < MAX_CLIENTS; ++i) {
-		  //   int clientSocket = clientSockets[i];
-		    if (clients[i].socket != -1) {
-		        FD_SET(clients[i].socket, &readFds);
-		        maxFd = std::max(maxFd, clients[i].socket);
-		    }
+		for (int i = 0; i < MAX_CLIENTS; ++i)
+		{
+			if (clients[i].socket != -1) 
+			{
+				FD_SET(clients[i].socket, &readFds);
+				maxFd = std::max(maxFd, clients[i].socket);
+			}
 		}
 
-		// Use select() to handle events
 		int numReady = select(maxFd + 1, &readFds, nullptr, nullptr, nullptr);
 		if (numReady == -1) {
-		    error("select() failed");
+			error("select() failed");
 		}
 
-		// Check if a new connection is ready to be accepted
 		if (FD_ISSET(serverSocket, &readFds)) {
-		    struct sockaddr_in clientAddress;
-		    socklen_t clientAddressLength = sizeof(clientAddress);
-		    int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientAddressLength);
-		    if (clientSocket == -1) {
-		        error("Failed to accept connection");
-		    }
+			struct sockaddr_in clientAddress;
+			socklen_t clientAddressLength = sizeof(clientAddress);
+			int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientAddressLength);
+			if (clientSocket == -1) {
+				error("Failed to accept connection");
+			}
 
-		    // Find an empty slot in the clientSockets array
-		    int index = -1;
-		    for (int i = 0; i < MAX_CLIENTS; ++i) {
-		        if (clients[i].socket == -1) {
-		            index = i;
-		            break;
-		        }
-		    }
+			int index = -1;
+			for (int i = 0; i < MAX_CLIENTS; ++i) {
+				if (clients[i].socket == -1) {
+					index = i;
+					break;
+				}
+			}
 
-		    if (index == -1) {
-		        // No empty slot available, close the new connection
-		        close(clientSocket);
-		        std::cout << "Rejected new connection: Too many clients" << std::endl;
-		    } else
-		    {
+			if (index == -1) {
+				close(clientSocket);
+				std::cout << "Rejected new connection: Too many clients" << std::endl;
+			} else
+			{
 			char passbuffer[MAX_BUFFER_SIZE];
 			for (int i = 3; i >= 0; i--)
 			{
@@ -149,7 +139,6 @@ int main(int argc, char* argv[])
 						char usernameBuffer[MAX_BUFFER_SIZE];
 						bytesRead = read(clientSocket, usernameBuffer, sizeof(usernameBuffer));
 						if (bytesRead > 0) {
-							//usernameBuffer[bytesRead - 1] = '\0';
 							std::string username(usernameBuffer, bytesRead);
 							for (int i = 0; i < username.length(); i++){
 								username.erase(username.find_last_not_of(" \t\r\n") + 1);
@@ -176,10 +165,8 @@ int main(int argc, char* argv[])
 						char nicknameBuffer[MAX_BUFFER_SIZE];
 						ssize_t bytesRead2 = read(clientSocket, nicknameBuffer, sizeof(nicknameBuffer));
 						if (bytesRead2 > 0) {
-							// nicknameBuffer[bytesRead2 - 1] = '\0';
 							std::string nickname(nicknameBuffer, bytesRead2);
 							nickname.erase(nickname.find_last_not_of(" \t\r\n") + 1);
-							// Assign the username to the client
 							clients[index].nickname = nickname;
 						}
 						clients[index].indice = 1;
@@ -264,7 +251,6 @@ int main(int argc, char* argv[])
 				}
 				else if (message.substr(0, 5) == "/JOIN")
 				{
-					std::cout << "args[2] =" + args[0] + ", args[1] =" + args[1];
 					if (args[1][0] != '#')
 						errorUser("/JOIN <#channel>", clientSocket);
 					//Check if the channel exist
@@ -377,7 +363,7 @@ int main(int argc, char* argv[])
 					if (searchBychannelname(args[1], channels, MAX_CHANNELS) != -1)
 					{
 						if (searchByUsername(args[2], clients, MAX_CLIENTS) != -1)
-							inviteUser(clients[searchByUsername(args[2], clients, MAX_CLIENTS)].socket, channels, clients, args[1], searchByUsername(args[2], clients, MAX_CLIENTS));
+							inviteUser(clients[searchByUsername(args[2], clients, MAX_CLIENTS)].socket, channels, clients, args[1], i);
 						else
 							errorUser("USER NOT FOUND", clientSocket);
 					}
@@ -386,7 +372,6 @@ int main(int argc, char* argv[])
 				}
 				else if (message.substr(0, 5) == "/PART")
 				{
-					std::cout << "args[1]=" << args[1];
 					if (args[1][0] != '#')
 					{
 						errorUser("/PART <#channel>", clientSocket);
@@ -394,7 +379,7 @@ int main(int argc, char* argv[])
 					else
 					{
 						args[1] = args[1].substr(1);
-						kickUser(channels, clients, args[1], clients[i].username, i);
+						PartUser(channels, clients, args[1], clients[i].username, i);
 					}
 				}
 				else if (message.substr(0, 6) == "/WHOIS")

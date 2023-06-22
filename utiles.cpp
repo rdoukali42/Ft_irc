@@ -189,6 +189,7 @@ int checkUserChannel(Channel *channels,const Client *clients, std::string user, 
 
 void user_channels(Channel *channels, Client *clients, int cl_in, int clientSocket)
 {
+	int tmp = 0;
 	for (int j = 0; j < MAX_CHANNELS; j++)
 	{
 		for (std::vector<int>::const_iterator it = channels[j].users_sockets.begin(); it != channels[j].users_sockets.end(); ++it) {
@@ -198,9 +199,12 @@ void user_channels(Channel *channels, Client *clients, int cl_in, int clientSock
 				sendUser("	-> " + channels[j].name + " | Status : Admin", clientSocket);
 			else
 				sendUser("	-> " + channels[j].name + " | Status : User", clientSocket);
+			tmp = 1;
 		}
 	}
 	}
+	if (tmp == 0)
+		sendUser("	-> User doesn't belong to any Channel ", clientSocket);
 }
 
 int numOfAdmins(Channel *channels, Client *clients, int ch_in)
@@ -217,19 +221,24 @@ int numOfAdmins(Channel *channels, Client *clients, int ch_in)
 void listAdmins(Channel *channels, Client *clients, int ind, int ch_in)
 {
 	int j = 1;
+	int tmp = 0;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (isAdmin(channels[ch_in].admin_users, clients[i].username))
 		{
 			sendUser("    -> ADMIN (" + std::to_string(j) + ") : " + clients[i].username, clients[ind].socket);
 			j++;
+			tmp = 1;
 		}
 	}
+	if (tmp == 0)
+		sendUser("     -> No Admin Found", clients[ind].socket);
 }
 
 void listUsers(Channel *channels, Client *clients, int ind, int ch_in)
 {
 	int j = 1;
+	int tmp = 0;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (searchIfExist(channels[ch_in].users_sockets, clients[i].socket))
@@ -238,14 +247,18 @@ void listUsers(Channel *channels, Client *clients, int ind, int ch_in)
 			{
 				sendUser("     -> USER (" + std::to_string(j) + ") : " + clients[i].username, clients[ind].socket);
 				j++;
+				tmp = 1;
 			}
 		}
 	}
+	if (tmp == 0)
+		sendUser("     -> No User Found", clients[ind].socket);
 }
 
 void listChannels(Channel *channels, Client *clients, int ind)
 {
 	int j = 1;
+	int tmp = 0;
 	for(int i = 0; i < MAX_CHANNELS; i++)
 	{
 		if (channels[i].name != "")
@@ -275,8 +288,11 @@ void listChannels(Channel *channels, Client *clients, int ind)
 			listUsers(channels, clients, ind, i);
 			sendUser("--------------------------------------------------------", clients[ind].socket);
 			j++;
+			tmp = 1;
 		}
 	}
+	if (tmp == 0)
+		sendUser("No Channel Found", clients[ind].socket);
 }
 
 int checkArg(const std::string str, int clientSocket)
@@ -323,7 +339,7 @@ int checkArg(const std::string str, int clientSocket)
 	else if (str.substr(0, 9) == "/PRIVMSG ")
 	{
 		if (countWords(str) < 3)
-			errorUser("/PRIVMSG <#Channel/USER> <New_Topic>", clientSocket);
+			errorUser("/PRIVMSG <#Channel/USER> <Message>", clientSocket);
 		else
 			return 1;
 	}
