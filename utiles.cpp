@@ -6,7 +6,7 @@
 /*   By: adinari <adinari@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:39:33 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/21 07:16:40 by adinari          ###   ########.fr       */
+/*   Updated: 2023/06/21 20:17:55 by adinari          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,17 +106,21 @@ std::vector<std::string> split_str(std::string str, char delim)
 std::string getMsg(std::string& str){
     std::string result = str;
     std::string::size_type pos = str.find(" ");
-    
+	if (pos != std::string::npos) 
+		result = str.substr(pos + 1);
+	pos = result.find_first_not_of(" \t\r\n");
+	if (pos != std::string::npos) 
+		result = result.substr(pos + 1);
     if (pos != std::string::npos) {
-        pos = str.find(" ", pos + 1); // Find the second space
-        if (pos != std::string::npos) {
-            result = str.substr(pos + 1); // Extract the substring after the second space
-        }
+        pos = result.find(" ");
+        if (pos != std::string::npos)
+            result = result.substr(pos);
+	pos = result.find_first_not_of(" \t\r\n");
+	if (pos != std::string::npos) 
+		result = result.substr(pos);
     }
-    // std::cout << "getMsg: " + result + "\n";
     return result;
 }
-
 int countWords(const std::string& str)
 {
 	// std::cout << "XXXXXXXXXXXXXX" << std::endl;
@@ -140,10 +144,10 @@ void erase_spaces(std::string& str)
 	std::string word;
 	std::stringstream s(str);
 	while (std::getline(s, word, ' ') && fw != 2) {
-		fw++;
+		if (word.size())
+			fw++;
 		row.push_back(word);
 	}
-
 	for (std::vector<std::string>::const_iterator it = row.begin(); it != row.end(); ++it)
 	{
         res += *it;

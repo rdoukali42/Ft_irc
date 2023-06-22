@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   KICK.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
+/*   By: adinari <adinari@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 01:32:47 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/19 04:48:05 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/21 21:35:41 by adinari          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,8 +59,21 @@ void kickUser(Channel *channels, Client *clients, std::string channelname, std::
 		std::string msgPrompt;
 		if (user == clients[i].username)
 			msgPrompt = "You Quit " + channels[ch_ind].name + "\n";
-		else
+		else{
 			msgPrompt = "You've been Kicked OUT by " + clients[i].username + " From " + channels[ch_ind].name + "\n";
+			// int clientFound = 0;
+			// for (std::vector<int>::const_iterator it = channels[ch_ind].users_sockets.begin(); it != channels[ch_ind].users_sockets.end(); ++it)
+			// {
+			// 	if (*it == clients[i].socket)
+			// 	{
+			// 		msgPrompt = "You've been Kicked OUT by " + clients[i].username + " From " + channels[ch_ind].name + "\n";
+			// 		clientFound = 1;
+			// 	}
+			// }
+			// if (!clientFound)
+			// 	msgPrompt = "Client " + clients[cl_ind].username + " doesn't exist inside channel " + channels[ch_ind].name + "\n";
+
+		}
 		send(clients[cl_ind].socket, msgPrompt.c_str(), msgPrompt.length(), 0);
 		if(isAdmin(channels[ch_ind].admin_users, clients[cl_ind].username))
 			removeAdmin(channels, clients, cl_ind, ch_ind);
