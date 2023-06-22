@@ -1,14 +1,4 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   utiles.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: adinari <adinari@student.42.fr>            +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/16 00:39:33 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/21 20:17:55 by adinari          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+
 
 #include "irc.hpp"
 
@@ -164,7 +154,7 @@ void erase_spaces(std::string& str)
 	}
     std::string remaining = getMsg(str);
 	str = res + " " + remaining;
-}
+} 
 
 void errorUser(const std::string& msg, int clientSocket)
 {
@@ -195,6 +185,22 @@ int checkUserChannel(Channel *channels,const Client *clients, std::string user, 
 		return 0;
 	}
 	return 1;
+}
+
+void user_channels(Channel *channels, Client *clients, int cl_in, int clientSocket)
+{
+	for (int j = 0; j < MAX_CHANNELS; j++)
+	{
+		for (std::vector<int>::const_iterator it = channels[j].users_sockets.begin(); it != channels[j].users_sockets.end(); ++it) {
+		if (*it == clients[cl_in].socket)
+		{
+			if (isAdmin(channels[j].admin_users, clients[cl_in].username))
+				sendUser("	-> " + channels[j].name + " | Status : Admin", clientSocket);
+			else
+				sendUser("	-> " + channels[j].name + " | Status : User", clientSocket);
+		}
+	}
+	}
 }
 
 int numOfAdmins(Channel *channels, Client *clients, int ch_in)

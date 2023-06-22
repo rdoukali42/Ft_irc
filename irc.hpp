@@ -1,14 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   irc.hpp                                            :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: adinari <adinari@student.42.fr>            +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/16 00:07:45 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/21 02:39:27 by adinari          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 # ifndef IRC_HPP
 # define IRC_HPP
@@ -80,5 +69,6 @@ int ifWord(const std::string str);
 void erase_spaces(std::string &str);
 std::vector<std::string> split_str(std::string str, char delim);
 std::string getMsg(std::string& str);
+void user_channels(Channel *channels, Client *clients, int cl_in, int clientSocket);
 
 #endif

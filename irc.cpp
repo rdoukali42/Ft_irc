@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   irc.cpp                                            :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: adinari <adinari@student.42.fr>            +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/16 00:08:32 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/22 21:36:46 by adinari          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "irc.hpp"
 
 Channel channels[MAX_CHANNELS];
@@ -226,10 +214,8 @@ int main(int argc, char* argv[])
 				std::string message(buffer);
 				message.erase(message.find_last_not_of(" \t\r\n") + 1);
 				erase_spaces(message);
-				// std::cout << "--------------------" << std::endl;
-				std::cout << "message =" + message << "."<< std::endl;
-				// std::cout << "--------------------" << std::endl;
 				std::vector<std::string> args = split_str(message, ' ');
+
 				if (checkArg(message, clientSocket) == -1)
 					continue ;
 				else if (message.substr(0, 8) == "/PRIVMSG")
@@ -239,9 +225,7 @@ int main(int argc, char* argv[])
 					if (args[1][0] == '#')
 						tmp = 1;
 					// Form the PRIVMSG command to be sent to the server
-					std::string privmsgCommand = clients[i].username + " : " + getMsg(message) + "\n";
-					// std::string privmsgCommand = clients[i].username + " : " + args[2];
-					
+					std::string privmsgCommand = clients[i].username + " : " + getMsg(message) + "\n";					
 					if (tmp == 0)
 					{
 						int mem = searchByUsername(args[1], clients, MAX_CLIENTS);// Send the PRIVMSG command to the client
@@ -280,7 +264,6 @@ int main(int argc, char* argv[])
 				}
 				else if (message.substr(0, 5) == "/JOIN")
 				{
-					// args[1].erase(args[1].find_last_not_of(" \t\r\n") + 1);
 					std::cout << "args[2] =" + args[0] + ", args[1] =" + args[1];
 					if (args[1][0] != '#')
 						errorUser("/JOIN <#channel>", clientSocket);
@@ -299,7 +282,6 @@ int main(int argc, char* argv[])
 						if (args[1][0] != '#')
 							throw std::runtime_error("Error: /KICK <#channel> <user>");
 						args[1] = args[1].substr(1);
-						// args[2].erase(args[2].find_last_not_of(" \t\r\n") + 1);
 						if (clients[i].username != args[2])
 							kickUser(channels, clients, args[1], args[2], i);
 						else
@@ -327,7 +309,6 @@ int main(int argc, char* argv[])
 									throw std::runtime_error("Error: Topic mode is set!");
 							}
 							std::string msg = getMsg(message); // Extract the message text
-							// msg.erase(msg.find_last_not_of(" \t\r\n") + 1);
 							if (searchBychannelname(args[1], channels, MAX_CHANNELS) == -1)
 								errorUser("CHANNEL NOT FOUND", clientSocket);
 							else
@@ -341,7 +322,6 @@ int main(int argc, char* argv[])
 						else //there is no msg, only show current topic
 						{
 							args[1] = args[1].substr(1);
-							// args[1].erase(args[1].find_last_not_of(" \t\r\n") + 1);// Remove trailing whitespace characters
 							int ind = searchBychannelname(args[1], channels, MAX_CHANNELS);
 							if (ind == -1)
 								errorUser("CHANNEL NOT FOUND", clients[i].socket);
@@ -378,7 +358,6 @@ int main(int argc, char* argv[])
 						{
 							std::string arg = argsAndmsg.substr(0, poss); // Extract the args with the sign --> ex : "+i"
 							std::string msg = argsAndmsg.substr(poss + 1); // Extract the message text --> ex : "testmsg"
-							// msg.erase(msg.find_last_not_of(" \t\r\n") + 1);// Remove trailing whitespace characters
 							modeOptions(channels, clients, channel, arg, msg , i);
 						}
 						else // The " " character was not found in the string --> that mean there is no msg
@@ -394,7 +373,6 @@ int main(int argc, char* argv[])
 				}
 				else if (message.substr(0, 7) == "/INVITE")
 				{
-					// args[2].erase(args[2].find_last_not_of(" \t\r\n") + 1);
 					args[1] = args[1].substr(1);
 					if (searchBychannelname(args[1], channels, MAX_CHANNELS) != -1)
 					{
@@ -427,6 +405,9 @@ int main(int argc, char* argv[])
 					{
 						sendUser("UserName : " + clients[cl_i].username, clients[i].socket);
 						sendUser("NickName : " + clients[cl_i].nickname, clients[i].socket);
+						sendUser("Channels : ", clients[i].socket);
+						user_channels(channels, clients, cl_i, clients[i].socket);
+						sendUser("------------------------------------------------------", clients[i].socket);
 					}
 					else
 						errorUser("USER NOT FOUND", clientSocket);
@@ -446,16 +427,13 @@ int main(int argc, char* argv[])
 				else if (message.substr(0, 5) == "/EXIT")
 				{
 					close(serverSocket);
-					system("leaks ircserv");
 					return 0;
 				}
 				}
 			}
 		}
 	}
-	
 	// Close the server socket
 	close(serverSocket);
-	system("leaks ircserv");
 	return 0;
 }
