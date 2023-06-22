@@ -1,14 +1,4 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   utiles.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/16 00:39:33 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/22 19:56:11 by rdoukali         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+
 
 #include "irc.hpp"
 
@@ -89,39 +79,82 @@ int searchBychannelname(const std::string& target, const Channel* channels, int 
 	return -1;
 }
 
+
 std::vector<std::string> split_str(std::string str, char delim)
 {
 	std::vector<std::string> row;
 	std::string word;
 	std::stringstream s(str);
 	while (std::getline(s, word, delim)) {
-		row.push_back(word);
+		if (word.size())
+			row.push_back(word);
+		// std::cout << "word =" + word + "." << std::endl;
 	}
 	return row;
 }
 
-void	spaces_erase(std::string &str)
-{
-	int i = 0;
-	int j = 0;
-	std::string ptr(str);
-	while(i < ptr.length())
-	{
-		if (ptr[i] == ' ')
-		{
-			i++;
-			j++;
-			while (ptr[i] == ' ' || ptr[i] == '\t')
-			{
-				// std::cout << "str[" << std::to_string(j) << "] : " << str[j] << std::endl;
-				str.erase(j, 1);
-				i++;
-			}
-		}
-		i++;
-		j++;
-	}
+std::string getMsg(std::string& str){
+    std::string result = str;
+    std::string::size_type pos = str.find(" ");
+	if (pos != std::string::npos) 
+		result = str.substr(pos + 1);
+	pos = result.find_first_not_of(" \t\r\n");
+	if (pos != std::string::npos) 
+		result = result.substr(pos + 1);
+    if (pos != std::string::npos) {
+        pos = result.find(" ");
+        if (pos != std::string::npos)
+            result = result.substr(pos);
+	pos = result.find_first_not_of(" \t\r\n");
+	if (pos != std::string::npos) 
+		result = result.substr(pos);
+    }
+    return result;
 }
+int countWords(const std::string& str)
+{
+	// std::cout << "XXXXXXXXXXXXXX" << std::endl;
+	std::istringstream iss(str);
+	int count = 0;
+	std::string word;
+	
+	while (iss >> word)
+		count++;
+	// std::cout << "str = " << str << std::endl;
+	// std::cout << "w_count = " << count << std::endl;
+	// std::cout << "YYYYYYYYYYYYYY" << std::endl;
+	return count;
+}
+
+void erase_spaces(std::string& str)
+{
+	int fw = 0;
+    std::string res;
+	std::vector<std::string> row;
+	std::string word;
+	std::stringstream s(str);
+	while (std::getline(s, word, ' ') && fw != 2) {
+		if (word.size())
+			fw++;
+		row.push_back(word);
+	}
+	for (std::vector<std::string>::const_iterator it = row.begin(); it != row.end(); ++it)
+	{
+        res += *it;
+		if (fw)
+		{
+			res += " ";
+			fw = 0;
+		}
+	}
+	if (countWords(str) <= 2)
+	{
+		str = res;
+		return ;
+	}
+    std::string remaining = getMsg(str);
+	str = res + " " + remaining;
+} 
 
 void errorUser(const std::string& msg, int clientSocket)
 {
@@ -137,16 +170,7 @@ void sendUser(const std::string& msg, int clientSocket)
 	return ;
 }
 
-int countWords(const std::string& str)
-{
-	std::istringstream iss(str);
-	int count = 0;
-	std::string word;
-	
-	while (iss >> word)
-		count++;
-	return count;
-}
+
 
 int checkUserChannel(Channel *channels,const Client *clients, std::string user, std::string channel, int clientSocket)
 {
@@ -257,6 +281,9 @@ void listChannels(Channel *channels, Client *clients, int ind)
 
 int checkArg(const std::string str, int clientSocket)
 {
+	// std::string word;
+	// std::stringstream s(str);
+	// std::getline(s, word, ' ');
 	if (str.substr(0, 6) == "/KICK ")
 	{
 		if (countWords(str) < 3 || countWords(str) > 4)
@@ -291,6 +318,7 @@ int checkArg(const std::string str, int clientSocket)
 			errorUser("/JOIN <#Channel>", clientSocket);
 		else
 			return 1;
+			std::cout << "join error!" << std::endl;
 	}
 	else if (str.substr(0, 9) == "/PRIVMSG ")
 	{
@@ -320,21 +348,17 @@ int checkArg(const std::string str, int clientSocket)
 		else
 			return 1;
 	}
-	else if (str.substr(0, 5) == "/LIST")
+	else if (str.substr(0, 6) == "/LIST " || str.substr(0, 6) == "/LIST\0")
 	{
 		if (countWords(str) != 1)
 			errorUser("/LIST", clientSocket);
 		else
 			return 1;
 	}
-	if (str.substr(0, 5) == "/EXIT")
-	{
+	else if (str.substr(0, 6) == "/EXIT " || str.substr(0, 6) == "/EXIT\0")
 		return 1;
-	}
-	if (str.substr(0, 5) == "/QUIT")
-	{
+	else if (str.substr(0, 6) == "/QUIT " || str.substr(0, 6) == "/QUIT\0")
 		return 1;
-	}
 	else
 		errorUser("INVALID COMMAND!!", clientSocket);
 	return -1;

@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   irc.cpp                                            :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/16 00:08:32 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/22 19:58:42 by rdoukali         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "irc.hpp"
 
 Channel channels[MAX_CHANNELS];
@@ -225,31 +213,24 @@ int main(int argc, char* argv[])
 
 				std::string message(buffer);
 				message.erase(message.find_last_not_of(" \t\r\n") + 1);
-				spaces_erase(message);
-				// sendUser("|" + message + "|", clientSocket);
+				erase_spaces(message);
+				std::vector<std::string> args = split_str(message, ' ');
+
 				if (checkArg(message, clientSocket) == -1)
 					continue ;
 				else if (message.substr(0, 8) == "/PRIVMSG")
 				{
 					int tmp = 0;
-					// Extract the target and message from the user input
-					std::string targetAndMessage = message.substr(9); // Remove the command prefix and space
-					if (targetAndMessage.find("#") != std::string::npos)
-					{
-						targetAndMessage = message.substr(10);
+					// args[1].erase(args[1].find_last_not_of(" \t\r\n") + 1);
+					if (args[1][0] == '#')
 						tmp = 1;
-					}
-					std::string::size_type pos = targetAndMessage.find(" ");
-					std::string target = targetAndMessage.substr(0, pos); // Extract the target (username or channel)
-					std::string text = targetAndMessage.substr(pos + 1); // Extract the message text
-
 					// Form the PRIVMSG command to be sent to the server
-					std::string privmsgCommand = clients[i].username + " : " + text;
+					std::string privmsgCommand = clients[i].username + " : " + getMsg(message) + "\n";					
 					if (tmp == 0)
 					{
-						int mem = searchByUsername(target, clients, MAX_CLIENTS);// Send the PRIVMSG command to the client
+						int mem = searchByUsername(args[1], clients, MAX_CLIENTS);// Send the PRIVMSG command to the client
 						if (mem == -1)
-							errorUser(target + ": USER NOT FOUND", clientSocket);
+							errorUser(args[1] + ": USER NOT FOUND", clientSocket);
 						else
 						{
 							ssize_t bytesWritten = send(clients[mem].socket, privmsgCommand.c_str(), privmsgCommand.length(), 0);
@@ -260,9 +241,10 @@ int main(int argc, char* argv[])
 					}
 					else
 					{
-						int ind = searchBychannelname(target, channels, MAX_CHANNELS);
+						args[1] = args[1].substr(1);
+						int ind = searchBychannelname(args[1], channels, MAX_CHANNELS);
 						if (ind == -1)
-							errorUser(target + ": CHANNEL NOT FOUND", clientSocket);
+							errorUser(args[1] + ": CHANNEL NOT FOUND", clientSocket);
 						else if (strcmp(channels[ind].PRVIMSG_Index.c_str(), "yes") == 0 && searchIfExist(channels[ind].users_sockets, clientSocket))
 						{
 							for (std::size_t i = 0; i < channels[ind].users_sockets.size(); ++i)
@@ -282,89 +264,77 @@ int main(int argc, char* argv[])
 				}
 				else if (message.substr(0, 5) == "/JOIN")
 				{
-					// Extract the Channel name and message from the user input
-					std::string channelAndMessage = message.substr(6); // Remove the command prefix and space
-					std::string::size_type pos = channelAndMessage.find(" ");
-					std::string channel = channelAndMessage.substr(1); // Extract the channel name ---room1
-					channel.erase(channel.find_last_not_of(" \t\r\n") + 1);
-
-					std::string ch = channelAndMessage.substr(0);
-					if ((channelAndMessage.find("#") == std::string::npos) || ch[0] != '#')
-					{
+					std::cout << "args[2] =" + args[0] + ", args[1] =" + args[1];
+					if (args[1][0] != '#')
 						errorUser("/JOIN <#channel>", clientSocket);
-					}
 					//Check if the channel exist
-					else if (searchBychannelname(channel, channels, MAX_CHANNELS) != -1)
-						channelExist(clientSocket, channels, clients, channel, i);
-					else//if the channel not exist
-						channelNotExist(clientSocket, channels, clients, channel, i, &channel_index);
+					else{
+						args[1] = args[1].substr(1);
+						if (searchBychannelname(args[1], channels, MAX_CHANNELS) != -1)
+							channelExist(clientSocket, channels, clients, args[1], i);
+						else//if the channel not exist
+							channelNotExist(clientSocket, channels, clients, args[1], i, &channel_index);
+					}
 				}
 				else if (message.substr(0, 5) == "/KICK")
 				{
-					// Extract the Channel name and username from the user input
-					std::string channelAnduser = message.substr(6); // Remove the command prefix and space
-					std::string::size_type pos = channelAnduser.find(" ");
-					std::string channelname = channelAnduser.substr(1, pos - 1); // Extract the channel starting from 1 to avoid '#'
-					std::string userAndmsg = channelAnduser.substr(pos + 1);
-					std::string user;
-					std::string::size_type poss = userAndmsg.find(" ");//poss is a giant number, probably due to having no space after the username, I changed to it \n so it's getting the correct username
-					if (poss != std::string::npos)// The " " character was found in the string.
-					{
-						user = userAndmsg.substr(0, poss); // Extract the username
-						std::string msg = userAndmsg.substr(poss + 1);
+					try{
+						if (args[1][0] != '#')
+							throw std::runtime_error("Error: /KICK <#channel> <user>");
+						args[1] = args[1].substr(1);
+						if (clients[i].username != args[2])
+							kickUser(channels, clients, args[1], args[2], i);
+						else
+							errorUser("Use /PART to Leave Channel", clientSocket);
 					}
-					else
-					{
-						user = userAndmsg.substr(0); // Extract the username
-						user.erase(user.find_last_not_of(" \t\r\n") + 1);
+					catch(std::runtime_error &e){
+						std::string kickErrorPrompt =  std::string(e.what()) + "\n";
+						send(clientSocket, kickErrorPrompt.c_str(), kickErrorPrompt.length(), 0);
 					}
-					if (clients[i].username != user)
-						kickUser(channels, clients, channelname, user, i);
-					else
-						errorUser("Use /PART to Leave Channel", clientSocket);
 				}
 				else if (message.substr(0, 6) == "/TOPIC")
 				{
 					std::string channelAndmsg = message.substr(7); // Remove the command prefix and space
 					std::string::size_type pos = channelAndmsg.find(" ");
 					try{
-					if (pos != std::string::npos)// The " " character was found in the string.
-					{
-						std::string channelname = channelAndmsg.substr(1, pos - 1); // Extract the channel starting from 1 to avoid '#'
-						if (channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].topic_mode == 1)
+						std::string ch = channelAndmsg.substr(0);
+						if (args[1][0] != '#')
+							throw std::runtime_error("Error: /TOPIC <#channel> <new_topic>");
+						else if (args.size() > 2)//there is a msg/topic to set
 						{
-							if (!isAdmin(channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].admin_users, clients[i].username))
-								throw std::runtime_error("Error: Topic mode is set!");
+							args[1] = args[1].substr(1); // Extract the channel starting from 1 to avoid '#'
+							if (channels[searchBychannelname(args[1], channels, MAX_CHANNELS)].topic_mode == 1)
+							{
+								if (!isAdmin(channels[searchBychannelname(args[1], channels, MAX_CHANNELS)].admin_users, clients[i].username))
+									throw std::runtime_error("Error: Topic mode is set!");
+							}
+							std::string msg = getMsg(message); // Extract the message text
+							if (searchBychannelname(args[1], channels, MAX_CHANNELS) == -1)
+								errorUser("CHANNEL NOT FOUND", clientSocket);
+							else
+								channels[searchBychannelname(args[1], channels, MAX_CHANNELS)].topic = msg;
+								std::string privmsgCommand = "New TOPIC is set: " + msg + "\r\n";
+								ssize_t bytesWritten = send(clients[i].socket, privmsgCommand.c_str(), privmsgCommand.length(), 0);
+								if (bytesWritten < 0) {
+									error("Sending data failed");
+								}
 						}
-						std::string msg = channelAndmsg.substr(pos + 1); // Extract the message text
-						msg.erase(msg.find_last_not_of(" \t\r\n") + 1);
-						if (searchBychannelname(channelname, channels, MAX_CHANNELS) == -1)
-							errorUser("CHANNEL NOT FOUND", clientSocket);
-						else
-							channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].topic = msg;
-							std::string privmsgCommand = "New TOPIC is set: " + msg + "\r\n";
+						else //there is no msg, only show current topic
+						{
+							args[1] = args[1].substr(1);
+							int ind = searchBychannelname(args[1], channels, MAX_CHANNELS);
+							if (ind == -1)
+								errorUser("CHANNEL NOT FOUND", clients[i].socket);
+							if (channels[searchBychannelname(args[1], channels, MAX_CHANNELS)].topic_mode == 1)
+							{
+								if (!isAdmin(channels[searchBychannelname(args[1], channels, MAX_CHANNELS)].admin_users, clients[i].username))
+									throw std::runtime_error("Error: Topic mode is set!");
+							}
+							std::string privmsgCommand = "TOPIC is : " + channels[ind].topic + "\r\n";
 							ssize_t bytesWritten = send(clients[i].socket, privmsgCommand.c_str(), privmsgCommand.length(), 0);
 							if (bytesWritten < 0) {
 								error("Sending data failed");
 							}
-					}
-					else // The " " character was not found in the string --> that mean there is no msg
-					{
-						std::string channelname = channelAndmsg.substr(pos + 2);
-						channelname.erase(channelname.find_last_not_of(" \t\r\n") + 1);// Remove trailing whitespace characters
-						int ind = searchBychannelname(channelname, channels, MAX_CHANNELS);
-						if (ind == -1)
-							errorUser("CHANNEL NOT FOUND", clients[i].socket);
-						if (channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].topic_mode == 1)
-						{
-							if (!isAdmin(channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].admin_users, clients[i].username))
-								throw std::runtime_error("Error: Topic mode is set!");
-						}
-						std::string privmsgCommand = "TOPIC is : " + channels[ind].topic + "\r\n";
-						ssize_t bytesWritten = send(clients[i].socket, privmsgCommand.c_str(), privmsgCommand.length(), 0);
-						if (bytesWritten < 0) {
-							error("Sending data failed");
-						}
 					}
 					}
 					catch(std::runtime_error &e){
@@ -374,25 +344,21 @@ int main(int argc, char* argv[])
 				}
 				else if (message.substr(0, 5) == "/MODE")/// should check if the client is ADMIN
 				{
-					std::string channelAndmsg = message.substr(6); // Remove the command prefix and space--> ex : "#room +i testmsg"
-					std::string::size_type pos = channelAndmsg.find(" "); //--> ex : 5
-					std::string channel = channelAndmsg.substr(1, pos - 1); //--> ex : "room"
-					std::string ch = channelAndmsg.substr(0);
-					if ((channelAndmsg.find("#") == std::string::npos) || ch[0] != '#')
+					std::string channel = args[1].substr(1); //--> ex : "room"
+					if (args[1][0] != '#')
 					{
-						errorUser("/MODE <#channel>", clientSocket);
+						errorUser("/MODE <#channel> <+/-><flag> [<param>]", clientSocket);
 					}
 					else if (searchBychannelname(channel, channels, MAX_CHANNELS) == -1)
 						errorUser("CHANNEL NOT FOUND", clientSocket); 
 					else if (isAdmin(channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users, clients[i].username)){
-						std::string argsAndmsg = channelAndmsg.substr(pos + 1); //--> ex : "+i testmsg"
+						std::string argsAndmsg = getMsg(message); //--> ex : "+i testmsg"
 						std::string::size_type poss = argsAndmsg.find(" ");// ex : 2
-						if (poss != std::string::npos)// The " " character was found in the string.
+						if (args.size() > 3)// The " " character was found in the string.
 						{
-							std::string args = argsAndmsg.substr(0, poss); // Extract the args with the sign --> ex : "+i"
+							std::string arg = argsAndmsg.substr(0, poss); // Extract the args with the sign --> ex : "+i"
 							std::string msg = argsAndmsg.substr(poss + 1); // Extract the message text --> ex : "testmsg"
-							msg.erase(msg.find_last_not_of(" \t\r\n") + 1);// Remove trailing whitespace characters
-							modeOptions(channels, clients, channel, args, msg , i);
+							modeOptions(channels, clients, channel, arg, msg , i);
 						}
 						else // The " " character was not found in the string --> that mean there is no msg
 						{
@@ -407,16 +373,11 @@ int main(int argc, char* argv[])
 				}
 				else if (message.substr(0, 7) == "/INVITE")
 				{
-					// Extract the Channel name and username from the user input
-					std::string channelAnduser = message.substr(8); // Remove the command prefix and space
-					std::string::size_type pos = channelAnduser.find(" ");
-					std::string channelname = channelAnduser.substr(1, pos - 1); // Extract the channel starting from 1 to avoid '#'
-					std::string user = channelAnduser.substr(pos + 1);
-					user.erase(user.find_last_not_of(" \t\r\n") + 1);
-					if (searchBychannelname(channelname, channels, MAX_CHANNELS) != -1)
+					args[1] = args[1].substr(1);
+					if (searchBychannelname(args[1], channels, MAX_CHANNELS) != -1)
 					{
-						if (searchByUsername(user, clients, MAX_CLIENTS) != -1)
-							inviteUser(clients[searchByUsername(user, clients, MAX_CLIENTS)].socket, channels, clients, channelname, searchByUsername(user, clients, MAX_CLIENTS));
+						if (searchByUsername(args[2], clients, MAX_CLIENTS) != -1)
+							inviteUser(clients[searchByUsername(args[2], clients, MAX_CLIENTS)].socket, channels, clients, args[1], searchByUsername(args[2], clients, MAX_CLIENTS));
 						else
 							errorUser("USER NOT FOUND", clientSocket);
 					}
@@ -425,35 +386,34 @@ int main(int argc, char* argv[])
 				}
 				else if (message.substr(0, 5) == "/PART")
 				{
-					// Extract the Channel name and username from the user input
-					std::string channelname = message.substr(7); // Extract the channel starting from 1 to avoid '#'
-					channelname.erase(channelname.find_last_not_of(" \t\r\n") + 1);
-					kickUser(channels, clients, channelname, clients[i].username, i);
+					std::cout << "args[1]=" << args[1];
+					if (args[1][0] != '#')
+					{
+						errorUser("/PART <#channel>", clientSocket);
+					}
+					else
+					{
+						args[1] = args[1].substr(1);
+						kickUser(channels, clients, args[1], clients[i].username, i);
+					}
 				}
 				else if (message.substr(0, 6) == "/WHOIS")
 				{
-					// Extract the username from the user input
-					std::string username = message.substr(7);
-					username.erase(username.find_last_not_of(" \t\r\n") + 1);
-					int cl_i = searchByUsername(username, clients, MAX_CLIENTS);
+					args[1] = message.substr(7);
+					int cl_i = searchByUsername(args[1], clients, MAX_CLIENTS);
 					if (cl_i != -1)
 					{
 						sendUser("UserName : " + clients[cl_i].username, clients[i].socket);
 						sendUser("NickName : " + clients[cl_i].nickname, clients[i].socket);
 						sendUser("Channels : ", clients[i].socket);
 						user_channels(channels, clients, cl_i, clients[i].socket);
-						sendUser("------------------------WHOIS--------------------------", clients[i].socket);
+						sendUser("------------------------------------------------------", clients[i].socket);
 					}
 					else
 						errorUser("USER NOT FOUND", clientSocket);
 				}
 				else if (message.substr(0, 5) == "/NICK")
-				{
-					// Extract the Channel name and username from the user input
-					std::string nickname = message.substr(6); // Extract the channel starting from 1 to avoid '#'
-					nickname.erase(nickname.find_last_not_of(" \t\r\n") + 1);
-					clients[i].nickname = nickname;
-				}
+					clients[i].nickname = args[1];
 				else if (message.substr(0, 5) == "/LIST")
 				{
 					listChannels(channels, clients, i);
