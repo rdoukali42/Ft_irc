@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:08:32 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/19 22:46:18 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/22 19:34:26 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -224,6 +224,9 @@ int main(int argc, char* argv[])
 				// Process the received data
 
 				std::string message(buffer);
+				message.erase(message.find_last_not_of(" \t\r\n") + 1);
+				spaces_erase(message);
+				// sendUser("|" + message + "|", clientSocket);
 				if (checkArg(message, clientSocket) == -1)
 					continue ;
 				else if (message.substr(0, 8) == "/PRIVMSG")

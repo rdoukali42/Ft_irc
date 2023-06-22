@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:39:33 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/19 21:55:04 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/22 19:35:35 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,6 +98,29 @@ std::vector<std::string> split_str(std::string str, char delim)
 		row.push_back(word);
 	}
 	return row;
+}
+
+void	spaces_erase(std::string &str)//WHOIS      reda
+{
+	int i = 0;
+	int j = 0;
+	std::string ptr(str);
+	while(i < ptr.length())
+	{
+		if (ptr[i] == ' ')
+		{
+			i++;
+			j++;
+			while (ptr[i] == ' ')
+			{
+				// std::cout << "str[" << std::to_string(j) << "] : " << str[j] << std::endl;
+				str.erase(j, 1);
+				i++;
+			}
+		}
+		i++;
+		j++;
+	}
 }
 
 void errorUser(const std::string& msg, int clientSocket)
