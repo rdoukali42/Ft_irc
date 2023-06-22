@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:08:32 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/22 19:34:26 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/22 19:58:42 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -287,7 +287,6 @@ int main(int argc, char* argv[])
 					std::string::size_type pos = channelAndMessage.find(" ");
 					std::string channel = channelAndMessage.substr(1); // Extract the channel name ---room1
 					channel.erase(channel.find_last_not_of(" \t\r\n") + 1);
-					// std::string text = channelAndMessage.substr(pos + 1); // Extract the message text
 
 					std::string ch = channelAndMessage.substr(0);
 					if ((channelAndMessage.find("#") == std::string::npos) || ch[0] != '#')
@@ -430,26 +429,6 @@ int main(int argc, char* argv[])
 					std::string channelname = message.substr(7); // Extract the channel starting from 1 to avoid '#'
 					channelname.erase(channelname.find_last_not_of(" \t\r\n") + 1);
 					kickUser(channels, clients, channelname, clients[i].username, i);
-					// if (searchBychannelname(channelname, channels, MAX_CHANNELS) != -1)
-					// {
-					// 	if(isAdmin(channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].admin_users, clients[i].username))
-					// 		removeAdmin(channels, clients, i, searchBychannelname(channelname, channels, MAX_CHANNELS));
-					// 	if (searchIfExist(channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].users_sockets, clients[i].socket))
-					// 	{
-					// 		sendUser("YOU QUIT " + channelname + " CHANNEL", clients[i].socket);
-					// 		removeClient(channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].users_sockets, clients[i].socket);
-					// 		if (channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].users_sockets.size() == 0)
-					// 		{
-					// 			std::cout << "Channel " << channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].name << " Deleted" << std::endl;
-					// 			channels[searchBychannelname(channelname, channels, MAX_CHANNELS)].name = "";
-					// 		}
-					// 	}
-					// 	else
-					// 		errorUser("YOUR NOT A PART OF THE CHANNEL", clientSocket);
-						
-					// }
-					// else
-					// 	errorUser("CHANNEL NOT FOUND", clientSocket);
 				}
 				else if (message.substr(0, 6) == "/WHOIS")
 				{
@@ -461,6 +440,9 @@ int main(int argc, char* argv[])
 					{
 						sendUser("UserName : " + clients[cl_i].username, clients[i].socket);
 						sendUser("NickName : " + clients[cl_i].nickname, clients[i].socket);
+						sendUser("Channels : ", clients[i].socket);
+						user_channels(channels, clients, cl_i, clients[i].socket);
+						sendUser("------------------------WHOIS--------------------------", clients[i].socket);
 					}
 					else
 						errorUser("USER NOT FOUND", clientSocket);
@@ -485,16 +467,13 @@ int main(int argc, char* argv[])
 				else if (message.substr(0, 5) == "/EXIT")
 				{
 					close(serverSocket);
-					system("leaks ircserv");
 					return 0;
 				}
 				}
 			}
 		}
 	}
-	
 	// Close the server socket
 	close(serverSocket);
-	system("leaks ircserv");
 	return 0;
 }

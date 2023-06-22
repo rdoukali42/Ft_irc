@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:07:45 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/22 19:16:24 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/22 19:53:41 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,6 +78,7 @@ void removeAdmin(Channel *channels, Client *clients, int client_index, int chann
 int checkUserChannel(Channel *channels,const Client *clients, std::string user, std::string channel, int clientSocket);
 int ifWord(const std::string str);
 void	spaces_erase(std::string &str);
+void user_channels(Channel *channels, Client *clients, int cl_in, int clientSocket);
 
 
 #endif

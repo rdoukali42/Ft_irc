@@ -6,7 +6,7 @@
 /*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/16 00:39:33 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/22 19:35:35 by rdoukali         ###   ########.fr       */
+/*   Updated: 2023/06/22 19:56:11 by rdoukali         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,7 +100,7 @@ std::vector<std::string> split_str(std::string str, char delim)
 	return row;
 }
 
-void	spaces_erase(std::string &str)//WHOIS      reda
+void	spaces_erase(std::string &str)
 {
 	int i = 0;
 	int j = 0;
@@ -111,7 +111,7 @@ void	spaces_erase(std::string &str)//WHOIS      reda
 		{
 			i++;
 			j++;
-			while (ptr[i] == ' ')
+			while (ptr[i] == ' ' || ptr[i] == '\t')
 			{
 				// std::cout << "str[" << std::to_string(j) << "] : " << str[j] << std::endl;
 				str.erase(j, 1);
@@ -161,6 +161,22 @@ int checkUserChannel(Channel *channels,const Client *clients, std::string user, 
 		return 0;
 	}
 	return 1;
+}
+
+void user_channels(Channel *channels, Client *clients, int cl_in, int clientSocket)
+{
+	for (int j = 0; j < MAX_CHANNELS; j++)
+	{
+		for (std::vector<int>::const_iterator it = channels[j].users_sockets.begin(); it != channels[j].users_sockets.end(); ++it) {
+		if (*it == clients[cl_in].socket)
+		{
+			if (isAdmin(channels[j].admin_users, clients[cl_in].username))
+				sendUser("	-> " + channels[j].name + " | Status : Admin", clientSocket);
+			else
+				sendUser("	-> " + channels[j].name + " | Status : User", clientSocket);
+		}
+	}
+	}
 }
 
 int numOfAdmins(Channel *channels, Client *clients, int ch_in)
