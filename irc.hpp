@@ -19,29 +19,28 @@ const int MAX_BUFFER_SIZE = 1024;
 const int MAX_CLIENTS = FD_SETSIZE - 1;
 const int MAX_CHANNELS = 1023;
 
-struct Client
-{
-	int socket;
-	int indice;
-	std::string nickname;
-	std::string username;
+class Client {
+public:
+    int socket;
+    int indice;
+    std::string nickname;
+    std::string username;
 };
 
-struct Channel
-{
-	std::string admin; //Who creat Channel should have if default
-	int index;
-	int limit;
-	int invite_only;
-	int topic_mode;
-	int key_mode;
-	int limit_mode;
-	std::vector<int> users_sockets;
-	std::vector<std::string> admin_users;
-	std::string name;
-	std::string topic;
-	std::string PRVIMSG_Index;
-	std::string password;
+class Channel {
+public:
+    int index;
+    int limit;
+    int invite_only;
+    int topic_mode;
+    int key_mode;
+    int limit_mode;
+    std::vector<int> users_sockets;
+    std::vector<std::string> admin_users;
+    std::string name;
+    std::string topic;
+    std::string PRVIMSG_Index;
+    std::string password;
 };
 
 int channelExist(const int clientSocket,Channel *channels,const Client *clients, std::string channel, const int i);

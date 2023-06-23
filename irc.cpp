@@ -208,7 +208,6 @@ int main(int argc, char* argv[])
 				else if (message.substr(0, 8) == "/PRIVMSG")
 				{
 					int tmp = 0;
-					// args[1].erase(args[1].find_last_not_of(" \t\r\n") + 1);
 					if (args[1][0] == '#')
 						tmp = 1;
 					// Form the PRIVMSG command to be sent to the server
@@ -253,10 +252,9 @@ int main(int argc, char* argv[])
 				{
 					if (args[1][0] != '#')
 						errorUser("/JOIN <#channel>", clientSocket);
-					//Check if the channel exist
 					else{
 						args[1] = args[1].substr(1);
-						if (searchBychannelname(args[1], channels, MAX_CHANNELS) != -1)
+						if (searchBychannelname(args[1], channels, MAX_CHANNELS) != -1)//Check if the channel exist
 							channelExist(clientSocket, channels, clients, args[1], i);
 						else//if the channel not exist
 							channelNotExist(clientSocket, channels, clients, args[1], i, &channel_index);
