@@ -31,6 +31,24 @@ void removeAdmin(Channel *channels, Client *clients, int client_index, int chann
 	}
 }
 
+void kickCheckAdmin(int ch_ind, int cl_ind, Channel *channels, Client *clients, std::string channelname, std::string user, const int i)
+{
+	std::string msgPrompt;
+	if (user == clients[i].username)
+		msgPrompt = "You Quit " + channels[ch_ind].name + "\n";
+	else{
+		msgPrompt = "You've been Kicked OUT by " + clients[i].username + " From " + channels[ch_ind].name + "\n";
+	}
+	send(clients[cl_ind].socket, msgPrompt.c_str(), msgPrompt.length(), 0);
+	if(isAdmin(channels[ch_ind].admin_users, clients[cl_ind].username))
+		removeAdmin(channels, clients, cl_ind, ch_ind);
+	removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
+	if (channels[ch_ind].users_sockets.size() == 0)
+	{
+		std::cout << "Channel " << channels[ch_ind].name << " Deleted" << std::endl;
+		channels[ch_ind].name = "";
+	}
+}
 
 void kickUser(Channel *channels, Client *clients, std::string channelname, std::string user, const int i)
 {
@@ -41,28 +59,30 @@ void kickUser(Channel *channels, Client *clients, std::string channelname, std::
 	else if (cl_ind == -1)
 		errorUser(user + ": USER NOT FOUND", clients[i].socket);
 	else if (isAdmin(channels[ch_ind].admin_users, clients[i].username))
-	{
-		std::string msgPrompt;
-		if (user == clients[i].username)
-			msgPrompt = "You Quit " + channels[ch_ind].name + "\n";
-		else{
-			msgPrompt = "You've been Kicked OUT by " + clients[i].username + " From " + channels[ch_ind].name + "\n";
-
-		}
-		send(clients[cl_ind].socket, msgPrompt.c_str(), msgPrompt.length(), 0);
-		if(isAdmin(channels[ch_ind].admin_users, clients[cl_ind].username))
-			removeAdmin(channels, clients, cl_ind, ch_ind);
-		removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
-		if (channels[ch_ind].users_sockets.size() == 0)
-		{
-			std::cout << "Channel " << channels[ch_ind].name << " Deleted" << std::endl;
-			channels[ch_ind].name = "";
-		}
-	}
+		kickCheckAdmin(ch_ind, cl_ind, channels, clients, channelname, user, i);
 	else
 	{
 		std::string Prompt = "You're not Allowed to do this Action \n";
 		send(clients[i].socket, Prompt.c_str(), Prompt.length(), 0);
+	}
+}
+
+void checkSearchIfExist(int ch_ind, int cl_ind, Channel *channels, Client *clients, std::string channelname, std::string user, const int i)
+{
+	std::string msgPrompt;
+	if (user == clients[i].username)
+		msgPrompt = "You Quit " + channels[ch_ind].name + "\n";
+	else{
+		msgPrompt = "You've been Kicked OUT by " + clients[i].username + " From " + channels[ch_ind].name + "\n";
+	}
+	send(clients[cl_ind].socket, msgPrompt.c_str(), msgPrompt.length(), 0);
+	if(isAdmin(channels[ch_ind].admin_users, clients[cl_ind].username))
+		removeAdmin(channels, clients, cl_ind, ch_ind);
+	removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
+	if (channels[ch_ind].users_sockets.size() == 0)
+	{
+		std::cout << "Channel " << channels[ch_ind].name << " Deleted" << std::endl;
+		channels[ch_ind].name = "";
 	}
 }
 
@@ -75,24 +95,7 @@ void PartUser(Channel *channels, Client *clients, std::string channelname, std::
 	else if (cl_ind == -1)
 		errorUser(user + ": USER NOT FOUND", clients[i].socket);
 	else if (searchIfExist(channels[ch_ind].users_sockets, clients[cl_ind].socket))
-	{
-		std::string msgPrompt;
-		if (user == clients[i].username)
-			msgPrompt = "You Quit " + channels[ch_ind].name + "\n";
-		else{
-			msgPrompt = "You've been Kicked OUT by " + clients[i].username + " From " + channels[ch_ind].name + "\n";
-
-		}
-		send(clients[cl_ind].socket, msgPrompt.c_str(), msgPrompt.length(), 0);
-		if(isAdmin(channels[ch_ind].admin_users, clients[cl_ind].username))
-			removeAdmin(channels, clients, cl_ind, ch_ind);
-		removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
-		if (channels[ch_ind].users_sockets.size() == 0)
-		{
-			std::cout << "Channel " << channels[ch_ind].name << " Deleted" << std::endl;
-			channels[ch_ind].name = "";
-		}
-	}
+		checkSearchIfExist(ch_ind, cl_ind, channels, clients, channelname, user, i);
 	else
 	{
 		std::string Prompt = "You're not Allowed to do this Action \n";

@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "irc.hpp"
-
 void modeOptions(Channel *channels, Client *clients, std::string channel,std::string args,std::string msg, const int i)
 {
 	if (args == "+l")
