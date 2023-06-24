@@ -118,7 +118,7 @@ void channelNotExist(const int clientSocket,Channel *channels,const Client *clie
 		if (bytesRead4 > 0) {
 			indexBuffer[bytesRead4 - 1] = '\0';
 			std::string indexx(indexBuffer, bytesRead);
-			if (strcmp(indexx.c_str(), "yes") == 0 || strcmp(indexx.c_str(), "no") == 0 )
+			if (strcmp(indexx.c_str(), "yes") == 0 || strcmp(indexx.c_str(), "no") == 0 || strcmp(indexx.c_str(), "YES") == 0 || strcmp(indexx.c_str(), "NO") == 0 )
 			{
 				// Assign the index to the channel
 				channels[*channel_index].PRVIMSG_Index = indexx;

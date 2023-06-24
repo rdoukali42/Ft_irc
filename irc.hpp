@@ -1,4 +1,3 @@
-
 # ifndef IRC_HPP
 # define IRC_HPP
 
@@ -19,17 +18,16 @@ const int MAX_BUFFER_SIZE = 1024;
 const int MAX_CLIENTS = FD_SETSIZE - 1;
 const int MAX_CHANNELS = 1023;
 
-struct Client
-{
+class Client {
+public:
 	int socket;
 	int indice;
 	std::string nickname;
 	std::string username;
 };
 
-struct Channel
-{
-	std::string admin; //Who creat Channel should have if default
+class Channel {
+public:
 	int index;
 	int limit;
 	int invite_only;
@@ -71,5 +69,6 @@ void erase_spaces(std::string &str);
 std::vector<std::string> split_str(std::string str, char delim);
 std::string getMsg(std::string& str);
 void user_channels(Channel *channels, Client *clients, int cl_in, int clientSocket);
+void sendToAdmins(Channel *channels, Client *clients, int ch_in, std::string msg);
 
 #endif

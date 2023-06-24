@@ -88,7 +88,6 @@ std::vector<std::string> split_str(std::string str, char delim)
 	while (std::getline(s, word, delim)) {
 		if (word.size())
 			row.push_back(word);
-		// std::cout << "word =" + word + "." << std::endl;
 	}
 	return row;
 }
@@ -113,23 +112,19 @@ std::string getMsg(std::string& str){
 }
 int countWords(const std::string& str)
 {
-	// std::cout << "XXXXXXXXXXXXXX" << std::endl;
 	std::istringstream iss(str);
 	int count = 0;
 	std::string word;
 	
 	while (iss >> word)
 		count++;
-	// std::cout << "str = " << str << std::endl;
-	// std::cout << "w_count = " << count << std::endl;
-	// std::cout << "YYYYYYYYYYYYYY" << std::endl;
 	return count;
 }
 
 void erase_spaces(std::string& str)
 {
 	int fw = 0;
-    std::string res;
+	std::string res;
 	std::vector<std::string> row;
 	std::string word;
 	std::stringstream s(str);
@@ -140,7 +135,7 @@ void erase_spaces(std::string& str)
 	}
 	for (std::vector<std::string>::const_iterator it = row.begin(); it != row.end(); ++it)
 	{
-        res += *it;
+		res += *it;
 		if (fw)
 		{
 			res += " ";
@@ -152,9 +147,9 @@ void erase_spaces(std::string& str)
 		str = res;
 		return ;
 	}
-    std::string remaining = getMsg(str);
+	std::string remaining = getMsg(str);
 	str = res + " " + remaining;
-} 
+}
 
 void errorUser(const std::string& msg, int clientSocket)
 {
@@ -169,8 +164,6 @@ void sendUser(const std::string& msg, int clientSocket)
 	send(clientSocket, msgError.c_str(), msgError.length(), 0);
 	return ;
 }
-
-
 
 int checkUserChannel(Channel *channels,const Client *clients, std::string user, std::string channel, int clientSocket)
 {
@@ -216,6 +209,17 @@ int numOfAdmins(Channel *channels, Client *clients, int ch_in)
 			j++;
 	}
 	return j;
+}
+
+void sendToAdmins(Channel *channels, Client *clients, int ch_in, std::string msg)
+{
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (isAdmin(channels[ch_in].admin_users, clients[i].username))
+		{
+			sendUser(msg , clients[i].socket);
+		}
+	}
 }
 
 void listAdmins(Channel *channels, Client *clients, int ind, int ch_in)
@@ -297,9 +301,6 @@ void listChannels(Channel *channels, Client *clients, int ind)
 
 int checkArg(const std::string str, int clientSocket)
 {
-	// std::string word;
-	// std::stringstream s(str);
-	// std::getline(s, word, ' ');
 	if (str.substr(0, 6) == "/KICK ")
 	{
 		if (countWords(str) < 3 || countWords(str) > 4)
