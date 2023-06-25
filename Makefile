@@ -6,7 +6,7 @@
 #    By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/06/17 00:54:12 by rdoukali          #+#    #+#              #
-#    Updated: 2023/06/18 23:08:08 by rdoukali         ###   ########.fr        #
+#    Updated: 2023/06/24 21:10:07 by rdoukali         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,8 +15,8 @@ NAME = ircserv
 SRC		=	${shell find . -name "*.cpp"}
 HDR		=	${shell find . -name "*.hpp"}
 
-FLAGS = -Wall -Wextra -Werror -std=c++98
-CC = c++
+FLAGS = 	-Wall -Wextra -Werror -std=c++98
+CC = 	c++
 OBJ = 	$(SRC:.cpp=.o)
 
 all: $(NAME)
@@ -27,15 +27,6 @@ all: $(NAME)
 $(NAME): $(OBJ)
 	@$(CC) $(FLAGS) $(OBJ) -o $(NAME)
 	@echo "\033[31m	   ༺ (\033[31m\033[32mIRC Compiled!\033[31m)༻\033[39m\n"
-
-# CC = c++
-# CFLAGS = -Wall -Werror -Wextra -std=c++98
-
-# all : ${NAME}
-
-# ${NAME} : ${SRC}
-# 	@${CC} ${CFLAGS} -o ${NAME} ${SRC}
-# 	@echo "\033[31m	   ༺ (\033[31m\033[32mIRC Compiled!\033[31m)༻\n"
 
 clean :
 	@echo "\033[33m     Clean  ALL ..."

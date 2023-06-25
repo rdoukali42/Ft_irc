@@ -1,4 +1,3 @@
-
 # ifndef IRC_HPP
 # define IRC_HPP
 
@@ -21,26 +20,26 @@ const int MAX_CHANNELS = 1023;
 
 class Client {
 public:
-    int socket;
-    int indice;
-    std::string nickname;
-    std::string username;
+	int socket;
+	int indice;
+	std::string nickname;
+	std::string username;
 };
 
 class Channel {
 public:
-    int index;
-    int limit;
-    int invite_only;
-    int topic_mode;
-    int key_mode;
-    int limit_mode;
-    std::vector<int> users_sockets;
-    std::vector<std::string> admin_users;
-    std::string name;
-    std::string topic;
-    std::string PRVIMSG_Index;
-    std::string password;
+	int index;
+	int limit;
+	int invite_only;
+	int topic_mode;
+	int key_mode;
+	int limit_mode;
+	std::vector<int> users_sockets;
+	std::vector<std::string> admin_users;
+	std::string name;
+	std::string topic;
+	std::string PRVIMSG_Index;
+	std::string password;
 };
 
 int channelExist(const int clientSocket,Channel *channels,const Client *clients, std::string channel, const int i);
@@ -70,5 +69,6 @@ void erase_spaces(std::string &str);
 std::vector<std::string> split_str(std::string str, char delim);
 std::string getMsg(std::string& str);
 void user_channels(Channel *channels, Client *clients, int cl_in, int clientSocket);
+void sendToAdmins(Channel *channels, Client *clients, int ch_in, std::string msg);
 
 #endif

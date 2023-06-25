@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   INVITE.cpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/16 03:05:39 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/22 23:27:30 by rdoukali         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "irc.hpp"
 
 void inviteUser(const int clientSocket,Channel *channels,const Client *clients, std::string channel, const int i)

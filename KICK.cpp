@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   KICK.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/16 01:32:47 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/23 00:29:55 by rdoukali         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "irc.hpp"
 
 void removeClient(std::vector<int>& users_sockets, int clientSocket)
@@ -53,11 +41,11 @@ void kickUser(Channel *channels, Client *clients, std::string channelname, std::
 		if(isAdmin(channels[ch_ind].admin_users, clients[cl_ind].username))
 			removeAdmin(channels, clients, cl_ind, ch_ind);
 		removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
-		if (channels[ch_ind].users_sockets.size() == 0)
-		{
-			std::cout << "Channel " << channels[ch_ind].name << " Deleted" << std::endl;
-			channels[ch_ind].name = "";
-		}
+		// if (channels[ch_ind].users_sockets.size() == 0)
+		// {
+		// 	std::cout << "Channel " << channels[ch_ind].name << " Deleted" << std::endl;
+		// 	channels[ch_ind].name = "";
+		// }
 	}
 	else
 	{
@@ -87,11 +75,11 @@ void PartUser(Channel *channels, Client *clients, std::string channelname, std::
 		if(isAdmin(channels[ch_ind].admin_users, clients[cl_ind].username))
 			removeAdmin(channels, clients, cl_ind, ch_ind);
 		removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
-		if (channels[ch_ind].users_sockets.size() == 0)
-		{
-			std::cout << "Channel " << channels[ch_ind].name << " Deleted" << std::endl;
-			channels[ch_ind].name = "";
-		}
+		// if (channels[ch_ind].users_sockets.size() == 0)
+		// {
+		// 	std::cout << "Channel " << channels[ch_ind].name << " Deleted" << std::endl;
+		// 	channels[ch_ind].name = "";
+		// }
 	}
 	else
 	{

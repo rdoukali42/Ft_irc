@@ -1,22 +1,10 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   MODE.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: rdoukali <rdoukali@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/16 02:47:34 by rdoukali          #+#    #+#             */
-/*   Updated: 2023/06/23 00:18:21 by rdoukali         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "irc.hpp"
 
 void modeOptions(Channel *channels, Client *clients, std::string channel,std::string args,std::string msg, const int i)
 {
 	if (args == "+l")
 	{
-		int new_limit;// = std::stoi(msg);
+		int new_limit;
 
 		try{
 			char *end;
@@ -95,7 +83,7 @@ void modeOptions(Channel *channels, Client *clients, std::string channel,std::st
 
 void modeNoOptions(Channel *channels, Client *clients, std::string channel,std::string args, const int i)
 {
-	args.erase(args.find_last_not_of(" \t\r\n") + 1);// Remove trailing whitespace characters
+	args.erase(args.find_last_not_of(" \t\r\n") + 1);
 	if (args == "-l")
 	{
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit_mode = 0;
@@ -108,10 +96,12 @@ void modeNoOptions(Channel *channels, Client *clients, std::string channel,std::
 	else if (args == "-i")
 	{
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].invite_only = 0;
+		sendToAdmins(channels, clients, searchBychannelname(channel, channels, MAX_CHANNELS), "User invitation is unrestricted!");
 	}
 	else if (args == "+i")
 	{
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].invite_only = 1;
+		sendToAdmins(channels, clients, searchBychannelname(channel, channels, MAX_CHANNELS), "User invitation is restricted!");
 	}
 	else if (args == "-t")
 	{
@@ -127,4 +117,4 @@ void modeNoOptions(Channel *channels, Client *clients, std::string channel,std::
 	}
 	else
 		errorUser("/MODE <#channel> <-t|+t|+i|-i|-l|-k>", clients[i].socket);
- }
+}

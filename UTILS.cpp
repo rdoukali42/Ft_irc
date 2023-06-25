@@ -88,7 +88,6 @@ std::vector<std::string> split_str(std::string str, char delim)
 	while (std::getline(s, word, delim)) {
 		if (word.size())
 			row.push_back(word);
-		// std::cout << "word =" + word + "." << std::endl;
 	}
 	return row;
 }
@@ -113,23 +112,19 @@ std::string getMsg(std::string& str){
 }
 int countWords(const std::string& str)
 {
-	// std::cout << "XXXXXXXXXXXXXX" << std::endl;
 	std::istringstream iss(str);
 	int count = 0;
 	std::string word;
 	
 	while (iss >> word)
 		count++;
-	// std::cout << "str = " << str << std::endl;
-	// std::cout << "w_count = " << count << std::endl;
-	// std::cout << "YYYYYYYYYYYYYY" << std::endl;
 	return count;
 }
 
 void erase_spaces(std::string& str)
 {
 	int fw = 0;
-    std::string res;
+	std::string res;
 	std::vector<std::string> row;
 	std::string word;
 	std::stringstream s(str);
@@ -140,7 +135,7 @@ void erase_spaces(std::string& str)
 	}
 	for (std::vector<std::string>::const_iterator it = row.begin(); it != row.end(); ++it)
 	{
-        res += *it;
+		res += *it;
 		if (fw)
 		{
 			res += " ";
@@ -152,9 +147,9 @@ void erase_spaces(std::string& str)
 		str = res;
 		return ;
 	}
-    std::string remaining = getMsg(str);
+	std::string remaining = getMsg(str);
 	str = res + " " + remaining;
-} 
+}
 
 void errorUser(const std::string& msg, int clientSocket)
 {
@@ -169,8 +164,6 @@ void sendUser(const std::string& msg, int clientSocket)
 	send(clientSocket, msgError.c_str(), msgError.length(), 0);
 	return ;
 }
-
-
 
 int checkUserChannel(Channel *channels,const Client *clients, std::string user, std::string channel, int clientSocket)
 {
@@ -216,6 +209,17 @@ int numOfAdmins(Channel *channels, Client *clients, int ch_in)
 			j++;
 	}
 	return j;
+}
+
+void sendToAdmins(Channel *channels, Client *clients, int ch_in, std::string msg)
+{
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (isAdmin(channels[ch_in].admin_users, clients[i].username))
+		{
+			sendUser(msg , clients[i].socket);
+		}
+	}
 }
 
 void listAdmins(Channel *channels, Client *clients, int ind, int ch_in)
@@ -297,38 +301,35 @@ void listChannels(Channel *channels, Client *clients, int ind)
 
 int checkArg(const std::string str, int clientSocket)
 {
-	// std::string word;
-	// std::stringstream s(str);
-	// std::getline(s, word, ' ');
-	if (str.substr(0, 6) == "/KICK ")
+	if (str.substr(0, 5) == "KICK ")
 	{
 		if (countWords(str) < 3 || countWords(str) > 4)
 			errorUser("/KICK <#Channel> <user> <:Message>/Optional", clientSocket);
 		else
 			return 1;
 	}
-	else if (str.substr(0, 8) == "/INVITE ")
+	else if (str.substr(0, 7) == "INVITE ")
 	{
 		if (countWords(str) != 3)
 			errorUser("/INVITE <#Channel> <user>", clientSocket);
 		else
 			return 1;
 	}
-	else if (str.substr(0, 7) == "/TOPIC ")
+	else if (str.substr(0, 6) == "TOPIC ")
 	{
 		if (countWords(str) < 2)
 			errorUser("/TOPIC <#Channel> <Message>/Optional", clientSocket);
 		else
 			return 1;
 	}
-	else if (str.substr(0, 6) == "/MODE ")
+	else if (str.substr(0, 5) == "MODE ")
 	{
 		if (countWords(str) < 3)
 			errorUser("/MODE <#Channel> <arg> <Options>", clientSocket);
 		else
 			return 1;
 	}
-	else if (str.substr(0, 6) == "/JOIN ")
+	else if (str.substr(0, 5) == "JOIN ")
 	{
 		if (countWords(str) != 2)
 			errorUser("/JOIN <#Channel>", clientSocket);
@@ -336,46 +337,56 @@ int checkArg(const std::string str, int clientSocket)
 			return 1;
 			std::cout << "join error!" << std::endl;
 	}
-	else if (str.substr(0, 9) == "/PRIVMSG ")
+	else if (str.substr(0, 8) == "PRIVMSG ")
 	{
 		if (countWords(str) < 3)
 			errorUser("/PRIVMSG <#Channel/USER> <Message>", clientSocket);
 		else
 			return 1;
 	}
-	else if (str.substr(0, 6) == "/PART ")
+	else if (str.substr(0, 5) == "PART ")
 	{
 		if (countWords(str) != 2)
 			errorUser("/PART <#Channel>", clientSocket);
 		else
 			return 1;
 	}
-	else if (str.substr(0, 7) == "/WHOIS ")
+	else if (str.substr(0, 7) == "WHOIS ")
 	{
 		if (countWords(str) != 2)
 			errorUser("/WHOIS <user>", clientSocket);
 		else
 			return 1;
 	}
-	else if (str.substr(0, 6) == "/NICK ")
+	else if (str.substr(0, 5) == "NICK ")
 	{
 		if (countWords(str) != 2)
 			errorUser("/NICK <new_nickname>", clientSocket);
 		else
 			return 1;
 	}
-	else if (str.substr(0, 6) == "/LIST " || str.substr(0, 6) == "/LIST\0")
+	else if (str.substr(0, 5) == "USER ")
+	{
+		if (countWords(str) < 2)
+			errorUser("/NICK <new_nickname>", clientSocket);
+		else
+			return 1;
+	}
+	else if (str.substr(0, 5) == "LIST " || str.substr(0, 5) == "LIST\0")
 	{
 		if (countWords(str) != 1)
 			errorUser("/LIST", clientSocket);
 		else
 			return 1;
 	}
-	else if (str.substr(0, 6) == "/EXIT " || str.substr(0, 6) == "/EXIT\0")
+	else if (str.substr(0, 5) == "EXIT " || str.substr(0, 5) == "EXIT\0")
 		return 1;
-	else if (str.substr(0, 6) == "/QUIT " || str.substr(0, 6) == "/QUIT\0")
+	else if (str.substr(0, 5) == "QUIT " || str.substr(0, 5) == "QUIT\0")
 		return 1;
 	else
-		errorUser("INVALID COMMAND!!", clientSocket);
+	{
+		sendUser(str, clientSocket);
+		// errorUser("INVALID COMMAND!!", clientSocket);
+	}
 	return -1;
 }
