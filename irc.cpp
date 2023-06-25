@@ -331,6 +331,68 @@ int init13(int i, int serverSocket, std::vector<std::string> args, std::string m
 		return 0;
 	}
 }
+void init14(int serverSocket, char *buffer, std::string message, int clientSocket, int channel_index)
+{
+	fd_set readFds;
+	for (int i = 0; i < MAX_CLIENTS; ++i)
+	{
+		int clientSocket = clients[i].socket;
+		if (clientSocket != -1 && FD_ISSET(clientSocket, &readFds))
+		{
+			// Read data from the client socket
+			ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
+			if (bytesRead < 0)
+				error("Reading data failed");
+			else if (bytesRead == 0)
+			{
+				// Connection closed by the client
+				close(clientSocket);
+				clients[i].socket = -1;  // Remove the client socket from the array
+				std::cout << "Client disconnected : "<< clients[i].username << std::endl;
+			}
+			else
+			{
+				buffer[bytesRead] = '\0';
+				// Process the received data
+				std::string message(buffer);
+				message.erase(message.find_last_not_of(" \t\r\n") + 1);
+				erase_spaces(message);
+				std::vector<std::string> args = split_str(message, ' ');
+				if (checkArg(message, clientSocket) == -1)
+					continue ;
+				init13(i, serverSocket, args, message, clientSocket, channel_index);
+			}
+		}
+	}
+}
+void init15(std::string password, int maxFd, char *buffer, int clientSocket)
+{
+	if (clientSocket == -1)
+		error("Failed to accept connection");
+	int index = -1;
+	for (int i = 0; i < MAX_CLIENTS; ++i)
+	{
+		if (clients[i].socket == -1)
+		{
+			index = i;
+			break;
+		}
+	}
+	if (index == -1)
+	{
+		close(clientSocket);
+		std::cout << "Rejected new connection: Too many clients" << std::endl;
+	}
+	else
+	{
+		char passbuffer[MAX_BUFFER_SIZE];
+		init2(clientSocket, passbuffer, password);
+		if (password == passbuffer)
+			init3(clientSocket, passbuffer, password, index);
+		// Update the maxFd value
+		maxFd = std::max(maxFd, clientSocket);
+	}
+}
 
 int main(int argc, char* argv[])
 {
@@ -374,74 +436,18 @@ int main(int argc, char* argv[])
 		int numReady = select(maxFd + 1, &readFds, nullptr, nullptr, nullptr);
 		if (numReady == -1)
 			error("select() failed");
-
 		if (FD_ISSET(serverSocket, &readFds))
 		{
 			struct sockaddr_in clientAddress;
 			socklen_t clientAddressLength = sizeof(clientAddress);
 			int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientAddressLength);
-			if (clientSocket == -1)
-				error("Failed to accept connection");
-
-			int index = -1;
-			for (int i = 0; i < MAX_CLIENTS; ++i)
-			{
-				if (clients[i].socket == -1)
-				{
-					index = i;
-					break;
-				}
-			}
-
-			if (index == -1)
-			{
-				close(clientSocket);
-				std::cout << "Rejected new connection: Too many clients" << std::endl;
-			}
-			else
-			{
-				char passbuffer[MAX_BUFFER_SIZE];
-				init2(clientSocket, passbuffer, password);
-				if (password == passbuffer)
-					init3(clientSocket, passbuffer, password, index);
-				// Update the maxFd value
-				maxFd = std::max(maxFd, clientSocket);
-			}
+			init15(password, maxFd, buffer, clientSocket);
 		}
 
 		// Check if there is data to be read from the client sockets
-		for (int i = 0; i < MAX_CLIENTS; ++i)
-		{
-			int clientSocket = clients[i].socket;
-			if (clientSocket != -1 && FD_ISSET(clientSocket, &readFds))
-			{
-				// Read data from the client socket
-				ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
-				if (bytesRead < 0)
-					error("Reading data failed");
-				else if (bytesRead == 0)
-				{
-					// Connection closed by the client
-					close(clientSocket);
-					clients[i].socket = -1;  // Remove the client socket from the array
-					std::cout << "Client disconnected : "<< clients[i].username << std::endl;
-				}
-				else
-				{
-					buffer[bytesRead] = '\0';
-					// Process the received data
-
-					std::string message(buffer);
-					message.erase(message.find_last_not_of(" \t\r\n") + 1);
-					erase_spaces(message);
-					std::vector<std::string> args = split_str(message, ' ');
-
-					if (checkArg(message, clientSocket) == -1)
-						continue ;
-					init13(i, serverSocket, args, message, clientSocket, channel_index);
-				}
-			}
-		}
+		int clientSocket;
+		std::string message;
+		init14(serverSocket, buffer, message, clientSocket, channel_index);
 	}
 	// Close the server socket
 	close(serverSocket);
