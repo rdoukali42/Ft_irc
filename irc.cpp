@@ -8,10 +8,29 @@ int main(int argc, char* argv[])
 	if (argc < 3)
 	{
 		std::cout << "Usage: ./a.out <port> <pass>" << std::endl;
-		return 0;
+		return 1;
 	}
 
-	const int port = std::stoi(argv[1]);
+	int port;
+	try{
+		char *end;
+		errno = 0;
+		long portConv = (std::strtol(argv[1], &end, 10));
+		if ((errno == ERANGE && (portConv == LONG_MAX || portConv == LONG_MIN)) || (errno != 0 && portConv == 0)) 
+			throw std::runtime_error(" Port is not valid!");
+		if (end == argv[1] || *end != '\0')
+			throw std::runtime_error(" Port is not a number!");
+		if (*end == '\0')
+			port= static_cast<int>(portConv);
+		else
+			throw std::runtime_error(" Port is not a number!");
+	}
+	catch (std::runtime_error &e){
+		std::cerr << "Input error:" + std::string(e.what()) << std::endl;
+		exit(1);
+	}
+
+	// const int port = std::stoi(argv[1]);
 	std::string password = argv[2];
 
 	int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
