@@ -353,7 +353,7 @@ int checkArg(const std::string str, int clientSocket)
 	}
 	else if (str.substr(0, 6) == "WHOIS ")
 	{
-		if (countWords(str) != 2)
+		if (countWords(str) > 2)
 			errorUser("/WHOIS <user>", clientSocket);
 		else
 			return 1;

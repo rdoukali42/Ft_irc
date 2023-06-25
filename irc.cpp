@@ -385,8 +385,9 @@ int main(int argc, char* argv[])
 				else if (message.substr(0, 5) == "WHOIS")
 				{
 					std::cout << "Im HERE" << std::endl;
+					std::vector<std::string> argz = split_str(message, ' ');
 					args[1] = message.substr(6);
-					int cl_i = searchByUsername(args[1], clients, MAX_CLIENTS);
+					int cl_i = searchByUsername(argz[1], clients, MAX_CLIENTS);
 					if (cl_i != -1)
 					{
 						sendUser("UserName : " + clients[cl_i].username, clients[i].socket);
