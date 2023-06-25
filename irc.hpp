@@ -58,7 +58,7 @@ int searchByUsername(const std::string& target, const Client* clients, int numCl
 int searchBychannelname(const std::string& target, const Channel* channels, int numChannels);
 int checkArg(const std::string str,int clientSocket);
 void errorUser(const std::string& msg,int  clientSocket);
-void sendUser(const std::string& msg, int clientSocket);
+void sendUser(const std::string& msg, int clientSocket, std::string name);
 void error(const std::string& msg);
 int numOfAdmins(Channel *channels, Client *clients, int ch_in);
 void listChannels(Channel *channels, Client *clients, int ind);
@@ -70,5 +70,6 @@ std::vector<std::string> split_str(std::string str, char delim);
 std::string getMsg(std::string& str);
 void user_channels(Channel *channels, Client *clients, int cl_in, int clientSocket);
 void sendToAdmins(Channel *channels, Client *clients, int ch_in, std::string msg);
+void sendUser2(const std::string& msg, int clientSocket);
 
 #endif

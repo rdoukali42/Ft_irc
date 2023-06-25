@@ -199,10 +199,9 @@ int main(int argc, char* argv[])
 			{
 				buffer[nb_read] = '\0';
 				std::string message(buffer);
-				// std::cout<< message << std::endl;
 				message.erase(message.find_last_not_of(" \t\r\n") + 1);
+				std::cout<< "receive ->" << message << "|" << std::endl;
 				erase_spaces(message);
-				std::cout << message << std::endl;
 				std::vector<std::string> args = split_str(message, ' ');
 
 				if (checkArg(message, clientSocket) == -1)
@@ -384,17 +383,19 @@ int main(int argc, char* argv[])
 				}
 				else if (message.substr(0, 5) == "WHOIS")
 				{
+					// std::string msgError = "PRIVMSG ali :Please provide the requested information.";
+					// send(clientSocket, msgError.c_str(), msgError.length(), 0);
 					std::cout << "Im HERE" << std::endl;
 					std::vector<std::string> argz = split_str(message, ' ');
 					args[1] = message.substr(6);
 					int cl_i = searchByUsername(argz[1], clients, MAX_CLIENTS);
 					if (cl_i != -1)
 					{
-						sendUser("UserName : " + clients[cl_i].username, clients[i].socket);
-						sendUser("NickName : " + clients[cl_i].nickname, clients[i].socket);
-						sendUser("Channels : ", clients[i].socket);
+						sendUser("UserName : " + clients[cl_i].username, clients[i].socket, clients[i].nickname);
+						sendUser("NickName : " + clients[cl_i].nickname, clients[i].socket, clients[i].nickname);
+						sendUser("Channels : ", clients[i].socket, clients[i].nickname);
 						user_channels(channels, clients, cl_i, clients[i].socket);
-						sendUser("------------------------------------------------------", clients[i].socket);
+						sendUser("------------------------------------------------------", clients[i].socket, clients[i].nickname);
 					}
 					else
 						errorUser(args[1] + ": USER NOT FOUND", clientSocket);
@@ -416,7 +417,7 @@ int main(int argc, char* argv[])
 					clients[i].socket = -1;
 					std::cout << "Client disconnected : "<< clients[i].username << std::endl;
 				}
-				else if (message.substr(0, 5) == "/EXIT")
+				else if (message.substr(0, 4) == "EXIT")
 				{
 					close(serverSocket);
 					return 0;
@@ -432,7 +433,8 @@ int main(int argc, char* argv[])
 						clients[i].username =av[1];
 						std::cout << "USER IS ::" << clients[i].username << std::endl;
 					}
-					sendUser(":ircserv CAP * LS :multi-prefix account-notify extended-join", clientSocket);
+	 				std::string msgError = ":ircserv CAP " + clients[i].nickname + " LS :multi-prefix account-notify extended-join";
+					sendUser2(msgError, clientSocket);
 				}
 			}
 			}
