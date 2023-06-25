@@ -351,7 +351,7 @@ int checkArg(const std::string str, int clientSocket)
 		else
 			return 1;
 	}
-	else if (str.substr(0, 7) == "WHOIS ")
+	else if (str.substr(0, 6) == "WHOIS ")
 	{
 		if (countWords(str) != 2)
 			errorUser("/WHOIS <user>", clientSocket);
@@ -383,10 +383,18 @@ int checkArg(const std::string str, int clientSocket)
 		return 1;
 	else if (str.substr(0, 5) == "QUIT " || str.substr(0, 5) == "QUIT\0")
 		return 1;
-	else
+	else if (str.substr(0, 6) == "CAP LS" || str.substr(0, 7) == "CAP LS\0")
+		return 1;
+	else if (str.substr(0, 6) == "CAP REQ" || str.substr(0, 7) == "CAP REQ\0")
+		sendUser(":ircserv CAP * ACK :multi-prefix", clientSocket);
+	else if (str.substr(0, 7) == "/quote ")
 	{
-		sendUser(str, clientSocket);
-		// errorUser("INVALID COMMAND!!", clientSocket);
+		std::cout << "HEY" << std::endl;
 	}
+	// else
+	// {
+	// 	sendUser(str, clientSocket);
+	// 	// errorUser("INVALID COMMAND!!", clientSocket);
+	// }
 	return -1;
 }

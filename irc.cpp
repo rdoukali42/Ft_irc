@@ -199,6 +199,7 @@ int main(int argc, char* argv[])
 			{
 				buffer[nb_read] = '\0';
 				std::string message(buffer);
+				// std::cout<< message << std::endl;
 				message.erase(message.find_last_not_of(" \t\r\n") + 1);
 				erase_spaces(message);
 				std::cout << message << std::endl;
@@ -383,6 +384,7 @@ int main(int argc, char* argv[])
 				}
 				else if (message.substr(0, 5) == "WHOIS")
 				{
+					std::cout << "Im HERE" << std::endl;
 					args[1] = message.substr(6);
 					int cl_i = searchByUsername(args[1], clients, MAX_CLIENTS);
 					if (cl_i != -1)
@@ -399,7 +401,10 @@ int main(int argc, char* argv[])
 				else if (message.substr(0, 4) == "NICK")
 					clients[i].nickname = args[1];
 				else if (message.substr(0, 4) == "USER")
+				{
 					clients[i].username = args[1];
+					std::cout << clients[i].username << std::endl;
+				}
 				else if (message.substr(0, 4) == "LIST")
 				{
 					listChannels(channels, clients, i);
@@ -415,7 +420,20 @@ int main(int argc, char* argv[])
 					close(serverSocket);
 					return 0;
 				}
+				else if (message.substr(0, 6) == "CAP LS" || message.substr(0, 7) == "CAP LS\0")
+				{
+					std::vector<std::string> argz = split_str(message, '\n');
+					if (argz[1].substr(0, 4) == "NICK")
+					clients[i].nickname = argz[1].substr(5);
+					if (argz[2].substr(0, 4) == "USER")
+					{
+						std::vector<std::string> av = split_str(argz[2], ' ');
+						clients[i].username =av[1];
+						std::cout << "USER IS ::" << clients[i].username << std::endl;
+					}
+					sendUser(":ircserv CAP * LS :multi-prefix account-notify extended-join", clientSocket);
 				}
+			}
 			}
 		}
 	}
