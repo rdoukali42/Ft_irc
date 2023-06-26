@@ -356,7 +356,15 @@ int main(int argc, char* argv[])
 				else if (message.substr(0, 4) == "NICK")
 					clients[i].nickname = args[1];
 				else if (message.substr(0, 4) == "USER")
-					clients[i].username = args[1];
+					{
+						if(searchByUsername(args[1], clients, MAX_CLIENTS) == -1)
+							clients[i].username = args[1];
+						else
+						{
+							errorUser("UserName Already Exist", clients[i].socket);
+							sendUser("Username Set is " + clients[i].username, clients[i].socket, clients[i].nickname);
+						}
+					}
 				else if (message.substr(0, 4) == "LIST")
 				{
 					listChannels(channels, clients, i);
