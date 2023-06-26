@@ -161,8 +161,7 @@ void errorUser(const std::string& msg, int clientSocket)
 void sendUser(const std::string& msg, int clientSocket, std::string name)
 {
 	std::string msgError = "PRIVMSG " + name + " :" + msg + "\n";
-	std::cout <<"Send  --> [" << msg << "]" << std::endl;
-	std::cout <<"--------------------------------------------------" << std::endl;
+	// std::cout <<"Send  --> [" << msg << "]" << std::endl;
 	send(clientSocket, msgError.c_str(), msgError.length(), 0);
 	return ;
 }
@@ -337,7 +336,6 @@ int checkArg(const std::string str, int clientSocket)
 			errorUser("/JOIN <#Channel>", clientSocket);
 		else
 			return 1;
-		std::cout << "join error!" << std::endl;
 	}
 	else if (str.substr(0, 8) == "PRIVMSG ")
 	{

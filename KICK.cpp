@@ -41,11 +41,6 @@ void kickUser(Channel *channels, Client *clients, std::string channelname, std::
 		if(isAdmin(channels[ch_ind].admin_users, clients[cl_ind].username))
 			removeAdmin(channels, clients, cl_ind, ch_ind);
 		removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
-		// if (channels[ch_ind].users_sockets.size() == 0)
-		// {
-		// 	std::cout << "Channel " << channels[ch_ind].name << " Deleted" << std::endl;
-		// 	channels[ch_ind].name = "";
-		// }
 	}
 	else
 	{
@@ -74,11 +69,6 @@ void PartUser(Channel *channels, Client *clients, std::string channelname, std::
 		if(isAdmin(channels[ch_ind].admin_users, clients[cl_ind].username))
 			removeAdmin(channels, clients, cl_ind, ch_ind);
 		removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
-		// if (channels[ch_ind].users_sockets.size() == 0)
-		// {
-		// 	std::cout << "Channel " << channels[ch_ind].name << " Deleted" << std::endl;
-		// 	channels[ch_ind].name = "";
-		// }
 	}
 	else
 	{

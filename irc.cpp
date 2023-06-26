@@ -60,6 +60,7 @@ int main(int argc, char* argv[])
 	{
 		clients[i].socket = -1;
 		clients[i].indice = 0;
+		clients[i].temp_pass = 0;
 	}
 
 	fd_set fds;
@@ -106,97 +107,12 @@ int main(int argc, char* argv[])
 				std::cout << "Rejected new connection: Too many clients" << std::endl;
 			} else
 			{
-			char passbuffer[MAX_BUFFER_SIZE];
-			// for (int i = 3; i >= 0; i--)
-			// {
-			// 	if (i == 3)
-			// 	{
-			// 		std::string passPrompt = "Please enter PassWord : ";
-			// 		send(clientSocket, passPrompt.c_str(), passPrompt.length(), 0);
-			// 		ssize_t nb_read = read(clientSocket, passbuffer, sizeof(passbuffer));
-			// 		if (nb_read > 0) {
-			// 			passbuffer[nb_read - 1] = '\0';
-			// 			std::string username(passbuffer, nb_read);
-			// 		}
-			// 		if (password == passbuffer)
-			// 			break ;
-			// 	}
-			// 	else if (i > 0 && password != passbuffer)
-			// 	{
-			// 		std::string passPrompt = "Wrong Password (" + std::to_string(i) + " retry left) : ";
-			// 		send(clientSocket, passPrompt.c_str(), passPrompt.length(), 0);
-			// 		ssize_t nb_read = read(clientSocket, passbuffer, sizeof(passbuffer));
-			// 		if (nb_read > 0) {
-			// 			passbuffer[nb_read - 1] = '\0';
-			// 			std::string username(passbuffer, nb_read);
-			// 		}
-			// 		if (password == passbuffer)
-			// 			break ;
-			// 	}
-			// 	else
-			// 	{
-			// 		std::string msg = "Wrong Password ! No retry left";
-			// 		ssize_t bytesWritten = send(clientSocket, msg.c_str(), msg.length(), 0);
-			// 		if (bytesWritten < 0) {
-			// 			error("Sending data failed");
-			// 		}
-			// 		close(clientSocket);
-			// 	}
-				
-			// }
-				// if (password == passbuffer)
-				// {
-					// Add the new client socket to the array
-					clients[index].socket = clientSocket;
-					std::cout << "New client connected: " << inet_ntoa(cl_addr.sin_addr) << std::endl;
-					clients[index].indice = 1;
-					clients[index].username = "user" + std::to_string(index);
-					clients[index].nickname = "nick" + std::to_string(index);
-					// std::string msg2 = "USER : " + clients[index].username + "| NICK : " + clients[index].nickname;
-					// sendUser(msg2, clientSocket, clients[index].nickname);
-					// if (clients[index].indice != 1)
-					// {
-					// 	ssize_t nb_read;
-					// 	while(1){
-					// 	std::string usernamePrompt = "Please enter your username: ";
-					// 	send(clientSocket, usernamePrompt.c_str(), usernamePrompt.length(), 0);
-					// 	char usernameBuffer[MAX_BUFFER_SIZE];
-					// 	nb_read = read(clientSocket, usernameBuffer, sizeof(usernameBuffer));
-					// 	if (nb_read > 0) {
-					// 		std::string username(usernameBuffer, nb_read);
-					// 		for (int i = 0; i < username.length(); i++){
-					// 			username.erase(username.find_last_not_of(" \t\r\n") + 1);
-					// 		}
-					// 		std::string::size_type pos = username.find(" ");
-					// 		if (pos != std::string::npos)// The " " character was found in the string.
-					// 		{
-					// 			sendUser("UserName should be in one word", clientSocket, clients[i].nickname);
-					// 		}
-					// 		else if (searchByUsername(username, clients, MAX_CLIENTS) != -1 && ifWord(username))
-					// 		{
-					// 			std::string usernamePrompt = "username already exist !\n";
-					// 			send(clientSocket, usernamePrompt.c_str(), usernamePrompt.length(), 0);
-					// 		}
-					// 		else if (ifWord(username))
-					// 		{
-					// 			clients[index].username = username;// Assign the username to the client
-					// 			break;
-					// 		}
-					// 	}
-					// 	}
-					// 	std::string nicknamePrompt = "Please enter your nickname: ";
-					// 	send(clientSocket, nicknamePrompt.c_str(), nicknamePrompt.length(), 0);
-					// 	char nicknameBuffer[MAX_BUFFER_SIZE];
-					// 	ssize_t nb_read2 = read(clientSocket, nicknameBuffer, sizeof(nicknameBuffer));
-					// 	if (nb_read2 > 0) {
-					// 		std::string nickname(nicknameBuffer, nb_read2);
-					// 		nickname.erase(nickname.find_last_not_of(" \t\r\n") + 1);
-					// 		clients[index].nickname = nickname;
-					// 	}
-					// 	clients[index].indice = 1;
-					// }
-				// }
-				// Update the fds_max value
+				char passbuffer[MAX_BUFFER_SIZE];
+				clients[index].socket = clientSocket;
+				std::cout << "New client connected: " << inet_ntoa(cl_addr.sin_addr) << std::endl;
+				clients[index].indice = 1;
+				clients[index].username = "user" + std::to_string(index);
+				clients[index].nickname = "nick" + std::to_string(index);
 				fds_max = std::max(fds_max, clientSocket);
 			}
 		}
@@ -223,11 +139,24 @@ int main(int argc, char* argv[])
 				std::string message(buffer);
 				message.erase(message.find_last_not_of(" \t\r\n") + 1);
 				erase_spaces(message);
-				std::cout<< "Received --> [" << message << "]" << std::endl;
+				// std::cout<< "Received --> [" << message << "]" << std::endl;
 				std::vector<std::string> args = split_str(message, ' ');
 
 				if (checkArg(message, clientSocket) == -1)
 					continue ;
+				if (clients[i].temp_pass == 0)
+				{
+					if (message.substr(0, 4) != "PASS" || args[1] != password)
+					{
+						errorUser("Wrong Password! disconecting", clientSocket);
+						close(clientSocket);
+						clients[i].username = "";
+						clients[i].nickname = "";
+						clients[i].socket = -1;
+						clients[i].temp_pass = 1;
+						continue ;
+					}
+				}
 				else if (message.substr(0, 7) == "PRIVMSG")
 				{
 					int tmp = 0;
@@ -242,11 +171,7 @@ int main(int argc, char* argv[])
 							errorUser(args[1] + ": USER NOT FOUND", clientSocket);
 						else
 						{
-							sendUser("PRIVMSG " + privmsgCommand, clients[mem].socket, clients[mem].nickname);
-							// ssize_t bytesWritten = send(clients[mem].socket, privmsgCommand.c_str(), privmsgCommand.length(), 0);
-							// if (bytesWritten < 0) {
-							// 	error("Sending data failed");
-							// }
+							sendUser(privmsgCommand, clients[mem].socket, clients[mem].nickname);
 						}
 					}
 					else
@@ -261,10 +186,6 @@ int main(int argc, char* argv[])
 							{
 								if (channels[ind].users_sockets[i] != clientSocket)
 									sendUser(privmsgCommand, channels[ind].users_sockets[i], "#" + channels[ind].name);
-								// ssize_t bytesWritten = send(channels[ind].users_sockets[i], privmsgCommand.c_str(), privmsgCommand.length(), 0);
-								// if (bytesWritten < 0) {
-								// 	error("Sending data failed");
-								// }
 							}
 						}
 						else
@@ -349,8 +270,13 @@ int main(int argc, char* argv[])
 								if (!isAdmin(channels[searchBychannelname(args[1], channels, MAX_CHANNELS)].admin_users, clients[i].username))
 									throw std::runtime_error("Error: Topic mode is set!");
 							}
-							std::string privmsgCommand = "TOPIC is : " + channels[ind].topic + "\r\n";
-							sendUser(privmsgCommand, clients[i].socket, clients[i].nickname);
+							if (channels[ind].topic != "")
+							{
+								std::string privmsgCommand = "TOPIC is : " + channels[ind].topic + "\r\n";
+								sendUser(privmsgCommand, clients[i].socket, clients[i].nickname);
+							}
+							else
+								sendUser("Topic is not Set", clients[i].socket, clients[i].nickname);
 					}
 					}
 					catch(std::runtime_error &e){
@@ -399,7 +325,7 @@ int main(int argc, char* argv[])
 					else
 						errorUser(args[1] + ": CHANNEL NOT FOUND", clientSocket);
 				}
-				else if (message.substr(0, 5) == "PART")
+				else if (message.substr(0, 4) == "PART")
 				{
 					if (args[1][0] != '#')
 					{
@@ -434,14 +360,6 @@ int main(int argc, char* argv[])
 				else if (message.substr(0, 4) == "LIST")
 				{
 					listChannels(channels, clients, i);
-				}
-				else if (message.substr(0, 4) == "PASS")
-				{
-					if (args[1] != password)
-						{
-							errorUser(args[1] + ": Wrong Password", clientSocket);
-							close(clientSocket);
-						}
 				}
 				else if (message.substr(0, 4) == "QUIT")
 				{

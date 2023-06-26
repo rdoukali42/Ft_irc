@@ -22,6 +22,7 @@ class Client {
 public:
 	int socket;
 	int indice;
+	int temp_pass;
 	std::string nickname;
 	std::string username;
 };

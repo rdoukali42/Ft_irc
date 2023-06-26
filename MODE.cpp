@@ -18,7 +18,6 @@ void modeOptions(Channel *channels, Client *clients, std::string channel,std::st
 				new_limit = static_cast<int>(limit);
 			else
 				throw std::runtime_error("new limit is not a number!");
-			std::cout << "new_limit is :: " << new_limit << "|" << std::endl;
 			channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit_mode = 1;
 			channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit = new_limit;
 		}
@@ -46,8 +45,7 @@ void modeOptions(Channel *channels, Client *clients, std::string channel,std::st
 			errorUser("User doesn't Exist in the Channel", clients[i].socket);
 	}
 	else if ( args == "-o")
-	{
-		std::cout << searchByUsername(msg, clients, MAX_CLIENTS) << " | " << isAdmin(channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users, clients[i].username) << std::endl;//check if client username exists && if he's already an admin. 
+	{ 
 		if (searchByUsername(msg, clients, MAX_CLIENTS) != -1 && isAdmin(channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users, clients[i].username))//check if client username exists && if he's already an admin. 
 		{
 			if(clients[i].username != msg && numOfAdmins(channels, clients, searchBychannelname(channel, channels, MAX_CHANNELS)) > 1)
