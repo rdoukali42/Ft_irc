@@ -152,8 +152,8 @@ int main(int argc, char* argv[])
 					clients[index].indice = 1;
 					clients[index].username = "user" + std::to_string(index);
 					clients[index].nickname = "nick" + std::to_string(index);
-					std::string msg2 = "USER : " + clients[index].username + "| NICK : " + clients[index].nickname;
-					sendUser(msg2, clientSocket, clients[index].nickname);
+					// std::string msg2 = "USER : " + clients[index].username + "| NICK : " + clients[index].nickname;
+					// sendUser(msg2, clientSocket, clients[index].nickname);
 					// if (clients[index].indice != 1)
 					// {
 					// 	ssize_t nb_read;
@@ -269,8 +269,7 @@ int main(int argc, char* argv[])
 						}
 						else
 						{
-							std::string msgPrompt = "No permission To send PRIVMSG in this Channel \n";
-							send(clients[i].socket, msgPrompt.c_str(), msgPrompt.length(), 0);
+							sendUser("No permission To send PRIVMSG in this Channel", clients[i].socket, clients[i].nickname);
 						}
 					}
 				}
@@ -278,6 +277,19 @@ int main(int argc, char* argv[])
 				{
 					if (args[1][0] != '#')
 						errorUser("/JOIN <#channel>", clientSocket);
+					else if (channels[searchBychannelname(args[1].substr(1), channels, MAX_CHANNELS)].key_mode == 1)
+					{
+						if (args.size() == 3 && args[2] == channels[searchBychannelname(args[1].substr(1), channels, MAX_CHANNELS)].password)
+						{
+							args[1] = args[1].substr(1);
+							if (searchBychannelname(args[1], channels, MAX_CHANNELS) != -1)
+								channelExist(clientSocket, channels, clients, args[1], i);
+							else//if the channel not exist
+								channelNotExist(clientSocket, channels, clients, args[1], i, &channel_index);
+						}
+						else
+							errorUser("Wrong Password!!", clientSocket);
+					}
 					else{
 						args[1] = args[1].substr(1);
 						if (searchBychannelname(args[1], channels, MAX_CHANNELS) != -1)
@@ -298,8 +310,8 @@ int main(int argc, char* argv[])
 							errorUser("Use /PART to Leave Channel", clientSocket);
 					}
 					catch(std::runtime_error &e){
-						std::string kickErrorPrompt =  std::string(e.what()) + "\n";
-						send(clientSocket, kickErrorPrompt.c_str(), kickErrorPrompt.length(), 0);
+						std::string kickErrorPrompt =  std::string(e.what());
+						sendUser(kickErrorPrompt, clients[i].socket, clients[i].nickname);
 					}
 				}
 				else if (message.substr(0, 5) == "TOPIC")
@@ -324,10 +336,7 @@ int main(int argc, char* argv[])
 							else
 								channels[searchBychannelname(args[1], channels, MAX_CHANNELS)].topic = msg;
 								std::string privmsgCommand = "New TOPIC is set: " + msg + "\r\n";
-								ssize_t bytesWritten = send(clients[i].socket, privmsgCommand.c_str(), privmsgCommand.length(), 0);
-								if (bytesWritten < 0) {
-									error("Sending data failed");
-								}
+								sendUser(privmsgCommand, clients[i].socket, clients[i].nickname);
 						}
 						else //there is no msg, only show current topic
 						{
@@ -341,15 +350,12 @@ int main(int argc, char* argv[])
 									throw std::runtime_error("Error: Topic mode is set!");
 							}
 							std::string privmsgCommand = "TOPIC is : " + channels[ind].topic + "\r\n";
-							ssize_t bytesWritten = send(clients[i].socket, privmsgCommand.c_str(), privmsgCommand.length(), 0);
-							if (bytesWritten < 0) {
-								error("Sending data failed");
-							}
+							sendUser(privmsgCommand, clients[i].socket, clients[i].nickname);
 					}
 					}
 					catch(std::runtime_error &e){
-						std::string indexPrompt =  std::string(e.what()) + "\n";
-						send(clientSocket, indexPrompt.c_str(), indexPrompt.length(), 0);
+						std::string indexPrompt =  std::string(e.what());
+						sendUser(indexPrompt, clients[i].socket, clients[i].nickname);
 					}
 				}
 				else if (message.substr(0, 4) == "MODE")/// should check if the client is ADMIN
@@ -377,8 +383,7 @@ int main(int argc, char* argv[])
 						}
 					}
 					else{
-						std::string kickPrompt = "You are not an ADMIN \n";
-						send(clients[i].socket, kickPrompt.c_str(), kickPrompt.length(), 0);
+						sendUser("You are not an ADMIN", clients[i].socket, clients[i].nickname);
 					}
 				}
 				else if (message.substr(0, 6) == "INVITE")

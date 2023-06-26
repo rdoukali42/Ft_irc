@@ -23,8 +23,8 @@ void modeOptions(Channel *channels, Client *clients, std::string channel,std::st
 			channels[searchBychannelname(channel, channels, MAX_CHANNELS)].limit = new_limit;
 		}
 		catch (std::runtime_error &e){
-			std::string limitErrorPrompt = "Error: " + std::string(e.what()) +"\n";
-			send(clients[i].socket, limitErrorPrompt.c_str(), limitErrorPrompt.length(), 0);
+			std::string limitErrorPrompt = "Error: " + std::string(e.what());
+			sendUser(limitErrorPrompt, clients[i].socket, clients[i].nickname);
 		}
 	}
 	else if ( args == "+o")
@@ -38,8 +38,8 @@ void modeOptions(Channel *channels, Client *clients, std::string channel,std::st
 			else
 			{
 				channels[searchBychannelname(channel, channels, MAX_CHANNELS)].admin_users.push_back(msg);
-				std::string channelFullPrompt = "You are now ADMIN in " + channels[searchBychannelname(channel, channels, MAX_CHANNELS)].name +"\n";
-				send(clients[searchByUsername(msg, clients, MAX_CLIENTS)].socket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+				std::string channelFullPrompt = "You are now ADMIN in " + channels[searchBychannelname(channel, channels, MAX_CHANNELS)].name;
+				sendUser(channelFullPrompt, clients[searchByUsername(msg, clients, MAX_CLIENTS)].socket, clients[searchByUsername(msg, clients, MAX_CLIENTS)].nickname);
 			}
 		}
 		else
@@ -106,14 +106,12 @@ void modeNoOptions(Channel *channels, Client *clients, std::string channel,std::
 	else if (args == "-t")
 	{
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].topic_mode = 0;
-		std::string limitPrompt = "Topic mode is Unset";
-		send(clients[i].socket, limitPrompt.c_str(), limitPrompt.length(), 0);;
+		sendUser("Topic mode is Unset", clients[i].socket, clients[i].nickname);
 	}
 	else if (args == "+t")
 	{
 		channels[searchBychannelname(channel, channels, MAX_CHANNELS)].topic_mode = 1;
-		std::string limitPrompt = "Topic mode is Set";
-		send(clients[i].socket, limitPrompt.c_str(), limitPrompt.length(), 0);
+		sendUser("Topic mode is Set", clients[i].socket, clients[i].nickname);
 	}
 	else
 		errorUser("/MODE <#channel> <-t|+t|+i|-i|-l|-k>", clients[i].socket);

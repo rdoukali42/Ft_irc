@@ -11,19 +11,15 @@ void inviteUser(const int clientSocket,Channel *channels,const Client *clients, 
 				sendUser("You've been invited to channel " + channels[channel_index2].name, clientSocket, clients[i].nickname);
 			}
 			else
-			{
-				std::string channelFullPrompt = "User Already In This Channel\n";
-				send(clients[i].socket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
-			}
+				sendUser("User Already In This Channel", clients[i].socket, clients[i].nickname);
 		}
 	else
 	{
 		if (searchIfExist(channels[channel_index2].users_sockets, clientSocket))
 		{
-			std::string channelFullPrompt = "User Already In This Channel\n";
-			send(clients[i].socket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+			sendUser("User Already In This Channel", clients[i].socket, clients[i].nickname);
 		}
 		std::string channelFullPrompt = "Channel " + channel + " is full\n";
-		send(clients[i].socket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+		sendUser(channelFullPrompt, clients[i].socket, clients[i].nickname);
 	}
 }

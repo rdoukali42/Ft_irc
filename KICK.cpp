@@ -32,12 +32,12 @@ void kickUser(Channel *channels, Client *clients, std::string channelname, std::
 	{
 		std::string msgPrompt;
 		if (user == clients[i].username)
-			msgPrompt = "You Quit " + channels[ch_ind].name + "\n";
+			msgPrompt = "You Quit " + channels[ch_ind].name;
 		else{
-			msgPrompt = "You've been Kicked OUT by " + clients[i].username + " From " + channels[ch_ind].name + "\n";
+			msgPrompt = "You've been Kicked OUT by " + clients[i].username + " From " + channels[ch_ind].name;
 
 		}
-		send(clients[cl_ind].socket, msgPrompt.c_str(), msgPrompt.length(), 0);
+		sendUser(msgPrompt, clients[cl_ind].socket, clients[cl_ind].nickname);
 		if(isAdmin(channels[ch_ind].admin_users, clients[cl_ind].username))
 			removeAdmin(channels, clients, cl_ind, ch_ind);
 		removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
@@ -49,8 +49,7 @@ void kickUser(Channel *channels, Client *clients, std::string channelname, std::
 	}
 	else
 	{
-		std::string Prompt = "You're not Allowed to do this Action \n";
-		send(clients[i].socket, Prompt.c_str(), Prompt.length(), 0);
+		sendUser("You're not Allowed to do this Action", clients[i].socket, clients[i].nickname);
 	}
 }
 
@@ -66,12 +65,12 @@ void PartUser(Channel *channels, Client *clients, std::string channelname, std::
 	{
 		std::string msgPrompt;
 		if (user == clients[i].username)
-			msgPrompt = "You Quit " + channels[ch_ind].name + "\n";
+			msgPrompt = "You Quit " + channels[ch_ind].name;
 		else{
-			msgPrompt = "You've been Kicked OUT by " + clients[i].username + " From " + channels[ch_ind].name + "\n";
+			msgPrompt = "You've been Kicked OUT by " + clients[i].username + " From " + channels[ch_ind].name;
 
 		}
-		send(clients[cl_ind].socket, msgPrompt.c_str(), msgPrompt.length(), 0);
+		sendUser(msgPrompt, clients[cl_ind].socket, clients[cl_ind].nickname);
 		if(isAdmin(channels[ch_ind].admin_users, clients[cl_ind].username))
 			removeAdmin(channels, clients, cl_ind, ch_ind);
 		removeClient(channels[ch_ind].users_sockets, clients[cl_ind].socket);
@@ -83,7 +82,6 @@ void PartUser(Channel *channels, Client *clients, std::string channelname, std::
 	}
 	else
 	{
-		std::string Prompt = "You're not Allowed to do this Action \n";
-		send(clients[i].socket, Prompt.c_str(), Prompt.length(), 0);
+		sendUser("You're not Allowed to do this Action", clients[i].socket, clients[i].nickname);
 	}
 }

@@ -333,11 +333,11 @@ int checkArg(const std::string str, int clientSocket)
 	}
 	else if (str.substr(0, 5) == "JOIN ")
 	{
-		if (countWords(str) != 2)
+		if (countWords(str) < 2)
 			errorUser("/JOIN <#Channel>", clientSocket);
 		else
 			return 1;
-			std::cout << "join error!" << std::endl;
+		std::cout << "join error!" << std::endl;
 	}
 	else if (str.substr(0, 8) == "PRIVMSG ")
 	{

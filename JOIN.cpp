@@ -26,19 +26,15 @@ int checkKeyMode(Channel *channels,const Client *clients,std::string channel, in
 int channelExist(const int clientSocket,Channel *channels,const Client *clients, std::string channel, const int i)
 {
 	int channel_index2 = searchBychannelname(channel, channels, MAX_CHANNELS);
-	if (checkKeyMode(channels, clients, channel, channel_index2, i) == -1)
-		return 0;
 	if (channels[channel_index2].invite_only == 1)
 	{
 		if (!searchIfExist(channels[channel_index2].users_sockets, clients[i].socket))
 		{
-			std::string channelFullPrompt = "invite only mode activated for this channel\n";
-			send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+			sendUser("invite only mode activated for this channel", clientSocket, clients[i].nickname);
 		}
 		else
 		{
-			std::string channelFullPrompt = "User Already In This Channel\n";
-			send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+			sendUser("User Already In This Channel", clientSocket, clients[i].nickname);
 		}
 		return 0;
 	}
@@ -47,24 +43,21 @@ int channelExist(const int clientSocket,Channel *channels,const Client *clients,
 			if (!searchIfExist(channels[channel_index2].users_sockets, clients[i].socket))
 			{
 				channels[channel_index2].users_sockets.push_back(clients[i].socket);
-				std::string channelFullPrompt = "Joined sucessfully!\n";
-				send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+				sendUser("Joined sucessfully!", clientSocket, clients[i].nickname);
 			}
 			else
 			{
-				std::string channelFullPrompt = "User Already In This Channel\n";
-				send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+				sendUser("User Already In This Channel", clientSocket, clients[i].nickname);
 			}
 		}
 	else
 	{
 		if (searchIfExist(channels[channel_index2].users_sockets, clients[i].socket))
 		{
-			std::string channelFullPrompt = "User Already In This Channel\n";
-			send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+			sendUser("User Already In This Channel", clientSocket, clients[i].nickname);
 		}
 		std::string channelFullPrompt = "Channel " + channel + " is full\n";
-		send(clientSocket, channelFullPrompt.c_str(), channelFullPrompt.length(), 0);
+		sendUser(channelFullPrompt, clientSocket, clients[i].nickname);
 	}
 	return (0);
 }
