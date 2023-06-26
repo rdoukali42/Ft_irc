@@ -8,7 +8,7 @@ void inviteUser(const int clientSocket,Channel *channels,const Client *clients, 
 			if (!searchIfExist(channels[channel_index2].users_sockets, clientSocket))
 			{
 				channels[channel_index2].users_sockets.push_back(clientSocket);
-				sendUser("You've been invited to channel " + channels[channel_index2].name, clientSocket);
+				sendUser("You've been invited to channel " + channels[channel_index2].name, clientSocket, clients[i].nickname);
 			}
 			else
 			{

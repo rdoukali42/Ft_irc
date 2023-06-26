@@ -58,7 +58,7 @@ int searchByUsername(const std::string& target, const Client* clients, int numCl
 int searchBychannelname(const std::string& target, const Channel* channels, int numChannels);
 int checkArg(const std::string str,int clientSocket);
 void errorUser(const std::string& msg,int  clientSocket);
-void sendUser(const std::string& msg, int clientSocket);
+void sendUser(const std::string& msg, int clientSocket, std::string name);
 void error(const std::string& msg);
 int numOfAdmins(Channel *channels, Client *clients, int ch_in);
 void listChannels(Channel *channels, Client *clients, int ind);
